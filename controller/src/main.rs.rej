@@ -1,0 +1,16 @@
+@@ -1410,2 +1410,3 @@
+                      let usage = veloce_common::JobUsage {
++                                 container_asset: job.container_asset.clone(),
+                                  job_id: job.id,
+@@ -1442,2 +1443,3 @@
+                      let usage = veloce_common::JobUsage {
++                                 container_asset: job.container_asset.clone(),
+                                  job_id: job.id,
+@@ -3420,2 +3423,3 @@
+         let job_short_wait = JobInfo {
++            container_asset: None,
+             id: 2,
+@@ -3539,2 +3543,3 @@
+         JobInfo {
++            container_asset: None,
+             id: 1,

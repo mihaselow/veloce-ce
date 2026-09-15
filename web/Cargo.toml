@@ -1,0 +1,26 @@
+[package]
+name = "veloce-web"
+version = "1.0.0-beta.2"
+edition = "2021"
+
+[dependencies]
+leptos = { version = "0.6", features = ["csr"] }
+leptos_router = { version = "0.6", features = ["csr"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+gloo-net = { version = "0.5", features = ["websocket"] }
+gloo-dialogs = "0.1"
+console_error_panic_hook = "0.1"
+console_log = "1.0"
+log = "0.4"
+wasm-bindgen = "0.2"
+veloce-common = { path = "../common" }
+uuid = { version = "1.0", features = ["v4", "serde", "js"] }
+chrono = { version = "0.4", features = ["serde", "wasmbind"] }
+js-sys = "0.3"
+regex = "1.10"
+web-sys = { version = "0.3", features = ["Window", "FormData", "File", "Blob", "HtmlInputElement", "FileList", "Url", "HtmlAnchorElement", "Storage", "Notification", "NotificationPermission", "NotificationOptions"] }
+futures = "0.3"
+gloo-timers = { version = "0.3", features = ["futures"] }
+shell-words = "1.1.1"
+pulldown-cmark = { version = "0.12", default-features = false, features = ["html"] }

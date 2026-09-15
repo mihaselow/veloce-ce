@@ -1,0 +1,8 @@
+@@ -361,2 +361,3 @@
+         jobs.push(JobInfo {
++            container_asset: None,
+             id: 0,
+@@ -419,2 +420,3 @@
+             let job = JobInfo {
++                container_asset: None,
+                 id: 0,

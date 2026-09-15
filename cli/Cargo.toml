@@ -1,0 +1,36 @@
+[package]
+name = "veloce-cli"
+version = "1.0.0-beta.2"
+edition = "2021"
+
+[[bin]]
+name = "veloce"
+path = "src/main.rs"
+
+[[bin]]
+name = "veloce-exec"
+path = "src/bin/veloce-exec.rs"
+
+[dependencies]
+veloce-common = { path = "../common" }
+tokio = { version = "1", features = ["full"] }
+clap = { version = "4.0", features = ["derive", "env"] }
+clap_complete = "4.5"
+anyhow = "1.0"
+log = "0.4"
+tokio-util = { version = "0.7", features = ["codec"] }
+futures = { version = "0.3" }
+chrono = "0.4"
+snow = "0.10.0"
+base64 = "0.22.1"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+uuid = { version = "1.0", features = ["v4"] }
+tar = "0.4"
+flate2 = "1.0"
+reqwest = { version = "0.12", default-features = false, features = ["json", "native-tls", "stream"] }
+shell-words = "1.1.1"
+toml = "1.1.2"
+
+[features]
+production = ["veloce-common/production"]

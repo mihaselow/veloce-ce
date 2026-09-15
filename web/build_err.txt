@@ -1,0 +1,152 @@
+2026-04-28T11:24:17.115716Z  INFO 🚀 Starting trunk 0.21.14
+2026-04-28T11:24:17.116172Z  WARN The field `address` in the configuration is deprecated and will be removed in a future version. Migrate to the `addresses` field, which allows adding more than one.
+2026-04-28T11:24:17.116301Z  INFO 📦 starting build
+   Compiling veloce-common v0.1.0 (/Users/michaelhaselow/_devel/veloce/common)
+   Compiling veloce-web v0.1.0 (/Users/michaelhaselow/_devel/veloce/web)
+error[E0277]: a value of type `u32` cannot be made by summing an iterator over elements of type `usize`
+    --> web/src/main.rs:112:79
+     |
+ 112 |     let total_cores = move || nodes.get().iter().map(|n| n.total_cores).sum::<u32>();
+     |                                                                         ---   ^^^ value of type `u32` cannot be made by summing a `std::iter::Iterator<Item=usize>`
+     |                                                                         |
+     |                                                                         required by a bound introduced by this call
+     |
+     = help: the trait `Sum<usize>` is not implemented for `u32`
+help: the following other types implement trait `Sum<A>`
+    --> /Users/michaelhaselow/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/iter/traits/accum.rs:48:9
+     |
+  48 |         impl Sum for $a {
+     |         ^^^^^^^^^^^^^^^ `u32` implements `Sum`
+...
+  70 |         impl<'a> Sum<&'a $a> for $a {
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^ `u32` implements `Sum<&u32>`
+...
+ 204 | integer_sum_product! { i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize }
+     | ---------------------------------------------------------------------------- in this macro invocation
+note: the method call chain might not have had the expected associated types
+    --> web/src/main.rs:112:50
+     |
+ 112 |     let total_cores = move || nodes.get().iter().map(|n| n.total_cores).sum::<u32>();
+     |                               -----       ------ ^^^^^^^^^^^^^^^^^^^^^^ `Iterator::Item` changed to `usize` here
+     |                               |           |
+     |                               |           `Iterator::Item` is `&WorkerInfo` here
+     |                               this expression has type `ReadSignal<Vec<WorkerInfo>>`
+note: required by a bound in `std::iter::Iterator::sum`
+    --> /Users/michaelhaselow/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/iter/traits/iterator.rs:3656:12
+     |
+3653 |     fn sum<S>(self) -> S
+     |        --- required by a bound in this associated function
+...
+3656 |         S: Sum<Self::Item>,
+     |            ^^^^^^^^^^^^^^^ required by this bound in `Iterator::sum`
+     = note: this error originates in the macro `integer_sum_product` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: a value of type `u32` cannot be made by summing an iterator over elements of type `usize`
+    --> web/src/main.rs:113:98
+     |
+ 113 |     let used_cores = move || nodes.get().iter().map(|n| n.total_cores - n.available_cores).sum::<u32>();
+     |                                                                                            ---   ^^^ value of type `u32` cannot be made by summing a `std::iter::Iterator<Item=usize>`
+     |                                                                                            |
+     |                                                                                            required by a bound introduced by this call
+     |
+     = help: the trait `Sum<usize>` is not implemented for `u32`
+help: the following other types implement trait `Sum<A>`
+    --> /Users/michaelhaselow/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/iter/traits/accum.rs:48:9
+     |
+  48 |         impl Sum for $a {
+     |         ^^^^^^^^^^^^^^^ `u32` implements `Sum`
+...
+  70 |         impl<'a> Sum<&'a $a> for $a {
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^ `u32` implements `Sum<&u32>`
+...
+ 204 | integer_sum_product! { i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize }
+     | ---------------------------------------------------------------------------- in this macro invocation
+note: the method call chain might not have had the expected associated types
+    --> web/src/main.rs:113:49
+     |
+ 113 |     let used_cores = move || nodes.get().iter().map(|n| n.total_cores - n.available_cores).sum::<u32>();
+     |                              -----       ------ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Iterator::Item` changed to `usize` here
+     |                              |           |
+     |                              |           `Iterator::Item` is `&WorkerInfo` here
+     |                              this expression has type `ReadSignal<Vec<WorkerInfo>>`
+note: required by a bound in `std::iter::Iterator::sum`
+    --> /Users/michaelhaselow/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/iter/traits/iterator.rs:3656:12
+     |
+3653 |     fn sum<S>(self) -> S
+     |        --- required by a bound in this associated function
+...
+3656 |         S: Sum<Self::Item>,
+     |            ^^^^^^^^^^^^^^^ required by this bound in `Iterator::sum`
+     = note: this error originates in the macro `integer_sum_product` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: `{closure@web/src/main.rs:116:20: 116:27}` doesn't implement `std::fmt::Display`
+   --> web/src/main.rs:161:55
+    |
+116 |     let avg_load = move || {
+    |                    ------- consider calling this closure
+...
+161 |                 <span class="value">{format!("{:.2}", avg_load)}</span>
+    |                                               -----   ^^^^^^^^ `{closure@web/src/main.rs:116:20: 116:27}` cannot be formatted with the default formatter
+    |                                               |
+    |                                               required by this formatting parameter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for closure `{closure@web/src/main.rs:116:20: 116:27}`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = help: use parentheses to call this closure: `avg_load()`
+
+warning: unused variable: `workers_count`
+   --> web/src/main.rs:184:10
+    |
+184 |     let (workers_count, set_workers_count) = create_signal(0usize);
+    |          ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_workers_count`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `controller_online`
+   --> web/src/main.rs:185:10
+    |
+185 |     let (controller_online, set_controller_online) = create_signal(false);
+    |          ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_controller_online`
+
+warning: unused variable: `total_jobs`
+   --> web/src/main.rs:303:9
+    |
+303 |     let total_jobs = move || jobs.get().len();
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_total_jobs`
+
+warning: unused variable: `running_jobs`
+   --> web/src/main.rs:304:9
+    |
+304 |     let running_jobs = move || jobs.get().iter().filter(|j| matches!(j.status, veloce_common::JobStatus::Running)).count();
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_running_jobs`
+
+warning: unused variable: `pending_jobs`
+   --> web/src/main.rs:305:9
+    |
+305 |     let pending_jobs = move || jobs.get().iter().filter(|j| matches!(j.status, veloce_common::JobStatus::Pending)).count();
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_jobs`
+
+warning: unused variable: `failed_jobs`
+   --> web/src/main.rs:306:9
+    |
+306 |     let failed_jobs = move || jobs.get().iter().filter(|j| matches!(j.status, veloce_common::JobStatus::Failed(_))).count();
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_failed_jobs`
+
+For more information about this error, try `rustc --explain E0277`.
+warning: `veloce-web` (bin "veloce-web") generated 6 warnings
+error: could not compile `veloce-web` (bin "veloce-web") due to 3 previous errors; 6 warnings emitted
+2026-04-28T11:24:20.390131Z ERROR ❌ error
+error from build pipeline
+
+Caused by:
+    0: HTML build pipeline failed (1 errors), showing first
+    1: error from asset pipeline
+    2: running cargo build
+    3: error during cargo build execution
+    4: cargo call to executable 'cargo' with args: '["build", "--target=wasm32-unknown-unknown", "--manifest-path", "/Users/michaelhaselow/_devel/veloce/web/Cargo.toml"]' returned a bad status: exit status: 101
+2026-04-28T11:24:20.390170Z ERROR error from build pipeline
+2026-04-28T11:24:20.390175Z  INFO   1: HTML build pipeline failed (1 errors), showing first
+2026-04-28T11:24:20.390179Z  INFO   2: error from asset pipeline
+2026-04-28T11:24:20.390181Z  INFO   3: running cargo build
+2026-04-28T11:24:20.390183Z  INFO   4: error during cargo build execution
+2026-04-28T11:24:20.390185Z  INFO   5: cargo call to executable 'cargo' with args: '["build", "--target=wasm32-unknown-unknown", "--manifest-path", "/Users/michaelhaselow/_devel/veloce/web/Cargo.toml"]' returned a bad status: exit status: 101

@@ -1,0 +1,8 @@
+@@ -288,2 +288,3 @@
+     Ok(JobUsage {
++        container_asset: None,
+         job_id: 1,
+@@ -363,2 +364,3 @@
+     Ok(JobUsage {
++        container_asset: None,
+         job_id: 1,

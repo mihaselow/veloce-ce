@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "common",
+    "controller",
+    "worker",
+    "cli",
+    "fileserver",
+    "web",
+    "veloce-slurm",
+]
+resolver = "2"

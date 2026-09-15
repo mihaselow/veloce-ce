@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Veloce Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Same-origin interactive client assets (no CDN at session open). -->
+    <link data-trunk rel="copy-dir" href="static/xterm"/>
+    <link data-trunk rel="copy-dir" href="static/novnc"/>
+    <link rel="stylesheet" href="/xterm/xterm.css"/>
+    <script src="/xterm/xterm.min.js"></script>
+    <script src="/xterm/xterm-addon-fit.js"></script>
+    <link data-trunk rel="rust"/>
+    <link data-trunk rel="css" href="style.css"/>
+  </head>
+  <body>
+    <script>
+      async function veloceFetchWsTicket(scope, jobId) {
+        const headers = { 'Content-Type': 'application/json' };
+        try {
+          const key = sessionStorage.getItem('veloce_controller_api_key');
+          if (key) headers['X-API-KEY'] = key;
+        } catch (_) {}
+        // wasm_bindgen passes u64 as BigInt; JSON.stringify cannot serialize BigInt.
+        const jobIdNum = jobId == null ? null : Number(jobId);
+        if (jobId != null && !Number.isFinite(jobIdNum)) {
+          throw new Error(`Invalid job id: ${String(jobId)}`);
+        }
+        const resp = await fetch('/api/v1/ws/ticket', {
+          method: 'POST',
+          headers,
+          credentials: 'same-origin',
+          body: JSON.stringify({ scope, job_id: jobIdNum }),
+        });
+        if (!resp.ok) {
+          throw new Error(`Ticket request failed (${resp.status})`);
+        }
+        const data = await resp.json();
+        if (!data.ticket) {
+          throw new Error('Ticket response missing ticket');
+        }
+        return data.ticket;
+      }
+
+      function veloceJobPathId(jobId) {
+        return String(typeof jobId === 'bigint' ? jobId : Number(jobId));
+      }
+
+      function veloceBackoffMs(attempt) {
+        return Math.min(8000, 500 * Math.pow(2, Math.max(0, attempt - 1)));
+      }
+
+      function veloceEscapeHtml(value) {
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      window.veloceTerminal = {
+        sessions: {},
+        init: function(elementId, jobId) {
+          this.destroy(elementId);
+
+          const container = document.getElementById(elementId);
+          if (!container) return;
+
+          const generation = Symbol(elementId);
+          let destroyed = false;
+          let ws = null;
+          let term = null;
+          let fitAddon = null;
+          let resizeObserver = null;
+          let reconnectTimer = null;
+          let reconnectAttempt = 0;
+          let intentionalClose = false;
+          let statusEl = null;
+          let statusText = null;
+
+          statusEl = document.createElement('div');
+          statusEl.style.cssText = 'font-size:0.75rem;color:var(--text-muted);padding:0 0 6px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;';
+          statusText = document.createElement('span');
+          statusText.textContent = 'Connecting…';
+          statusEl.appendChild(statusText);
+          const reconnectBtn = document.createElement('button');
+          reconnectBtn.type = 'button';
+          reconnectBtn.textContent = 'Reconnect';
+          reconnectBtn.style.cssText = 'padding:2px 8px;font-size:0.7rem;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:var(--text-normal);cursor:pointer;';
+          reconnectBtn.onclick = () => {
+            reconnectAttempt = 0;
+            connect(true);
+          };
+          statusEl.appendChild(reconnectBtn);
+          // Insert status above the xterm host if parent is the console wrapper.
+          if (container.parentElement) {
+            container.parentElement.insertBefore(statusEl, container);
+          }
+          const updateStatus = (msg) => { if (statusText) statusText.textContent = msg; };
+
+          term = new Terminal({
+            cursorBlink: true,
+            theme: {
+              background: '#0d1117',
+              foreground: '#c9d1d9',
+              cursor: '#38bdf8',
+            },
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            fontSize: 13,
+          });
+          fitAddon = new FitAddon.FitAddon();
+          term.loadAddon(fitAddon);
+          term.open(container);
+          fitAddon.fit();
+
+          const scheduleReconnect = (reason) => {
+            if (destroyed || intentionalClose) return;
+            reconnectAttempt += 1;
+            const delay = veloceBackoffMs(reconnectAttempt);
+            updateStatus(`Reconnecting (${reconnectAttempt}) in ${Math.round(delay / 100) / 10}s…${reason ? ' — ' + reason : ''}`);
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(() => connect(false), delay);
+          };
+
+          const connect = async (manual) => {
+            if (destroyed) return;
+            clearTimeout(reconnectTimer);
+            intentionalClose = true;
+            try { if (ws) ws.close(); } catch (_) {}
+            intentionalClose = false;
+            ws = null;
+
+            updateStatus(manual || reconnectAttempt === 0 ? 'Connecting to secure Veloce TTY…' : `Reconnecting (${reconnectAttempt})…`);
+            if (reconnectAttempt === 0 || manual) {
+              term.write('\r\n\x1b[90mConnecting to secure Veloce TTY…\x1b[0m\r\n');
+            }
+
+            let ticket;
+            try {
+              ticket = await veloceFetchWsTicket('terminal', jobId);
+            } catch (e) {
+              if (destroyed || this.sessions[elementId]?.generation !== generation) return;
+              updateStatus(`Ticket error: ${e.message || e}`);
+              scheduleReconnect(e.message || 'ticket failed');
+              return;
+            }
+            if (destroyed || this.sessions[elementId]?.generation !== generation) return;
+
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/api/v1/jobs/${veloceJobPathId(jobId)}/terminal?ticket=${encodeURIComponent(ticket)}`;
+            const socket = new WebSocket(wsUrl);
+            socket.binaryType = 'arraybuffer';
+            ws = socket;
+
+            socket.onopen = () => {
+              if (destroyed || this.sessions[elementId]?.generation !== generation) {
+                try { socket.close(); } catch (_) {}
+                return;
+              }
+              reconnectAttempt = 0;
+              updateStatus('Connected');
+              term.write('\x1b[2K\r\x1b[32mConnected. Spawning shell…\x1b[0m\r\n');
+              socket.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+            };
+
+            socket.onmessage = (event) => {
+              if (typeof event.data === 'string') {
+                try {
+                  const msg = JSON.parse(event.data);
+                  if (msg && msg.type === 'closed') {
+                    updateStatus(`Session closed: ${msg.reason || 'unknown'}`);
+                    term.write(`\r\n\x1b[31mSession closed: ${msg.reason || 'unknown'}\x1b[0m\r\n`);
+                    return;
+                  }
+                } catch (_) {}
+                term.write(event.data);
+                return;
+              }
+              if (event.data instanceof ArrayBuffer) {
+                term.write(new Uint8Array(event.data));
+              }
+            };
+
+            socket.onerror = () => {
+              updateStatus('Connection error');
+              term.write('\r\n\x1b[31mConnection error.\x1b[0m\r\n');
+            };
+
+            socket.onclose = (ev) => {
+              if (destroyed || intentionalClose) return;
+              const reason = (ev.reason && ev.reason.length) ? ev.reason : `code ${ev.code}`;
+              updateStatus(`Disconnected (${reason})`);
+              term.write('\r\n\x1b[90mSession closed.\x1b[0m\r\n');
+              scheduleReconnect(reason);
+            };
+          };
+
+          term.onData((data) => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'input', data: data }));
+            }
+          });
+
+          resizeObserver = new ResizeObserver(() => {
+            try {
+              fitAddon.fit();
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          });
+          resizeObserver.observe(container);
+
+          this.sessions[elementId] = {
+            generation,
+            destroy: () => {
+              destroyed = true;
+              intentionalClose = true;
+              clearTimeout(reconnectTimer);
+              if (resizeObserver) resizeObserver.disconnect();
+              try { if (ws) ws.close(); } catch (_) {}
+              try { if (term) term.dispose(); } catch (_) {}
+              if (statusEl && statusEl.parentElement) statusEl.parentElement.removeChild(statusEl);
+              if (this.sessions[elementId]?.generation === generation) {
+                delete this.sessions[elementId];
+              }
+            }
+          };
+
+          connect(true);
+        },
+        destroy: function(elementId) {
+          if (this.sessions[elementId]) {
+            this.sessions[elementId].destroy();
+          }
+        }
+      };
+    </script>
+    <script>
+      window.veloceVnc = {
+        sessions: {},
+        init: async function(elementId, jobId) {
+          this.destroy(elementId);
+
+          const container = document.getElementById(elementId);
+          if (!container) {
+            // Element may not be mounted yet; retry briefly without consuming tickets.
+            let tries = 0;
+            const wait = () => {
+              tries += 1;
+              if (tries > 20) return;
+              if (document.getElementById(elementId)) {
+                this.init(elementId, jobId);
+              } else {
+                setTimeout(wait, 50);
+              }
+            };
+            setTimeout(wait, 50);
+            return;
+          }
+
+          const generation = Symbol(elementId);
+          let destroyed = false;
+          let rfb = null;
+          let reconnectTimer = null;
+          let reconnectAttempt = 0;
+          let intentionalClose = false;
+
+          const placeholder = container.querySelector('.vnc-placeholder');
+          const setPlaceholder = (html, show) => {
+            if (!placeholder) return;
+            placeholder.style.display = show ? 'flex' : 'none';
+            if (html != null) placeholder.innerHTML = html;
+          };
+
+          const clearVncChildren = () => {
+            Array.from(container.children).forEach((child) => {
+              if (!child.classList.contains('vnc-placeholder')) {
+                child.remove();
+              }
+            });
+          };
+
+          const reconnectControls = (message) => `
+            <i class="ph ph-warning" style="font-size: 2rem; color: var(--danger);"></i>
+            <span style="text-align:center;max-width:28rem;">${veloceEscapeHtml(message)}</span>
+            <button type="button" data-veloce-vnc-reconnect="1"
+              style="padding:6px 12px;font-size:0.8rem;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:var(--text-normal);cursor:pointer;">
+              Reconnect
+            </button>
+          `;
+
+          const bindReconnectButton = () => {
+            const btn = container.querySelector('[data-veloce-vnc-reconnect]');
+            if (btn) {
+              btn.onclick = () => {
+                reconnectAttempt = 0;
+                connect(true);
+              };
+            }
+          };
+
+          const scheduleReconnect = (reason) => {
+            if (destroyed || intentionalClose) return;
+            reconnectAttempt += 1;
+            const delay = veloceBackoffMs(reconnectAttempt);
+            setPlaceholder(reconnectControls(
+              `VNC disconnected${reason ? ': ' + reason : ''}. Reconnecting (${reconnectAttempt}) in ${Math.round(delay / 100) / 10}s…`
+            ), true);
+            bindReconnectButton();
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(() => connect(false), delay);
+          };
+
+          const connect = async (manual) => {
+            if (destroyed || this.sessions[elementId]?.generation !== generation) return;
+            clearTimeout(reconnectTimer);
+            intentionalClose = true;
+            try { if (rfb) rfb.disconnect(); } catch (_) {}
+            intentionalClose = false;
+            rfb = null;
+            clearVncChildren();
+
+            setPlaceholder(`
+              <i class="ph ph-circle-notch animate-spin" style="font-size: 2rem; color: var(--primary);"></i>
+              <span>${manual || reconnectAttempt === 0 ? 'Establishing Secure VNC Tunnel…' : 'Reconnecting VNC…'}</span>
+            `, true);
+
+            let ticket;
+            try {
+              ticket = await veloceFetchWsTicket('vnc', jobId);
+            } catch (e) {
+              if (destroyed || this.sessions[elementId]?.generation !== generation) return;
+              setPlaceholder(reconnectControls(`Ticket error: ${e.message || e}`), true);
+              bindReconnectButton();
+              scheduleReconnect(e.message || 'ticket failed');
+              return;
+            }
+            if (destroyed || this.sessions[elementId]?.generation !== generation) return;
+
+            let RFB;
+            try {
+              ({ default: RFB } = await import('/novnc/core/rfb.js'));
+            } catch (e) {
+              console.error('Failed to load noVNC:', e);
+              if (destroyed || this.sessions[elementId]?.generation !== generation) return;
+              setPlaceholder(reconnectControls(`Failed to load noVNC client: ${e.message || e}`), true);
+              bindReconnectButton();
+              return;
+            }
+            if (destroyed || this.sessions[elementId]?.generation !== generation) return;
+
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/api/v1/jobs/${veloceJobPathId(jobId)}/vnc?ticket=${encodeURIComponent(ticket)}`;
+            const resizeToContainer = elementId.includes('fullscreen');
+
+            try {
+              rfb = new RFB(container, wsUrl, { wsProtocols: ['binary'] });
+            } catch (e) {
+              setPlaceholder(reconnectControls(`VNC client error: ${e.message || e}`), true);
+              bindReconnectButton();
+              scheduleReconnect(e.message || 'RFB init failed');
+              return;
+            }
+
+            rfb.scaleViewport = !resizeToContainer;
+            rfb.clipViewport = resizeToContainer;
+            rfb.resizeSession = true;
+
+            rfb.addEventListener('connect', () => {
+              if (destroyed || this.sessions[elementId]?.generation !== generation) return;
+              reconnectAttempt = 0;
+              console.log('VNC Connected to job ' + jobId);
+              setPlaceholder(null, false);
+            });
+
+            rfb.addEventListener('disconnect', (e) => {
+              if (destroyed || intentionalClose) return;
+              const clean = e?.detail?.clean;
+              const reason = clean ? 'session ended' : 'connection reset';
+              console.log('VNC Disconnected from job ' + jobId, clean);
+              scheduleReconnect(reason);
+            });
+          };
+
+          this.sessions[elementId] = {
+            generation,
+            destroy: () => {
+              destroyed = true;
+              intentionalClose = true;
+              clearTimeout(reconnectTimer);
+              try { if (rfb) rfb.disconnect(); } catch (_) {}
+              clearVncChildren();
+              if (placeholder) {
+                placeholder.style.display = 'flex';
+                placeholder.innerHTML = `
+                  <i class="ph ph-circle-notch animate-spin" style="font-size: 2rem; color: var(--primary);"></i>
+                  Establishing Secure VNC Tunnel...
+                `;
+              }
+              if (this.sessions[elementId]?.generation === generation) {
+                delete this.sessions[elementId];
+              }
+            }
+          };
+
+          connect(true);
+        },
+        destroy: function(elementId) {
+          if (this.sessions[elementId]) {
+            this.sessions[elementId].destroy();
+          }
+        }
+      };
+    </script>
+  </body>
+</html>
