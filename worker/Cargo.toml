@@ -31,7 +31,7 @@ snow = "0.10.0"
 base64 = "0.22.1"
 nvml-wrapper = "0.10"
 opentelemetry = { version = "0.21" }
-opentelemetry_sdk = { version = "0.21", features = ["rt-tokio"] }
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "0.14", features = ["grpc-tonic", "tokio"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
