@@ -54,15 +54,17 @@ Provides secure, real-time access to running jobs through the cluster control pl
 - **Pivot Recovery**: Persists running job state to `veloce_worker_jobs.bin`, allowing the worker to re-attach to active processes after a crash or restart.
 - **User Impersonation**: Securely executes jobs as the requesting user (`setuid`/`setgid`).
 - **Noise Protocol**: All commands, telemetry, and interactive data are encrypted and authenticated via the **Noise Protocol Framework**.
-- **Graceful Draining**: Implements the `WorkerDraining` protocol for Kubernetes scale-down events, ensuring jobs complete before a node is reclaimed.
+- **Graceful Draining**: Implements the `WorkerDraining` protocol so in-flight jobs can finish before a node is taken out of the pool.
 
 ## ⚙️ Configuration
 
-Configured via `veloce-worker.toml`.
+Configured via `veloce-worker.toml` in the current working directory. Sample: [`examples/veloce-worker.toml`](../examples/veloce-worker.toml).
 
 ```toml
 controller = "127.0.0.1:9000"
-cluster_secret = "..." # Derived from VELOCE_SECRET
+cluster_secret = "..." # VELOCE_SECRET
+fileserver_url = "https://127.0.0.1:9001"
+fileserver_api_key = "..."
 idle_threshold_cpu = 0.5
 idle_timeout_seconds = 600
 # prolog = "/path/to/setup.sh"

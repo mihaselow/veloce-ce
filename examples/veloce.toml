@@ -1,0 +1,19 @@
+# veloce-controller — copy to cwd as veloce.toml
+# Env overrides: VELOCE_API_KEY, VELOCE_FILESERVER_URL, VELOCE_FILESERVER_KEY,
+# VELOCE_ACCOUNTING_BACKEND, VELOCE_ACCOUNTING_DB_URL
+
+bind_address = "127.0.0.1:9000"
+api_port = 8080
+cert_path = "cert.pem"
+key_path = "key.pem"
+cluster_secret = "CHANGE_ME_VELOCE_SECRET"
+api_key = "CHANGE_ME_VELOCE_API_KEY"
+fileserver_url = "https://127.0.0.1:9001"
+fileserver_api_key = "CHANGE_ME_VELOCE_FILESERVER_KEY"
+# web_dist_path = "web/dist"
+
+[accounting]
+backend = "file"
+database_url = ""
+connection_timeout_seconds = 10
+max_connections = 20

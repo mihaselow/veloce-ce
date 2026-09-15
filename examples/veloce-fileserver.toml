@@ -1,0 +1,8 @@
+# veloce-fileserver — copy to cwd as veloce-fileserver.toml
+# Env / flags: --bind, VELOCE_FILESERVER_KEY (--api-key)
+
+bind_address = "127.0.0.1:9001"
+staging_dir = "staging"
+cert_path = "cert.pem"
+key_path = "key.pem"
+api_key = "CHANGE_ME_VELOCE_FILESERVER_KEY"

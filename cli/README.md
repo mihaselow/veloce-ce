@@ -73,7 +73,7 @@ veloce jobs events <JOB_ID>
 veloce jobs events <JOB_ID> --json
 ```
 
-Job events expose controller-generated domain signals such as convergence, license, or failure-analysis messages when available.
+Job events expose controller-generated domain signals (for example convergence or failure analysis) when available.
 
 ### **7. Resubmit a Previous Job**
 ```bash
@@ -103,7 +103,7 @@ client_id = "cli"
 client_token = "<client-registration-token>"
 ```
 
-CLI flags override environment variables, environment variables override TOML config, and TOML config overrides built-in defaults. Set `VELOCE_CONFIG` to point at a different config file.
+CLI flags override environment variables, environment variables override TOML config, and TOML config overrides built-in defaults. Set `VELOCE_CONFIG` to point at a different config file. Sample: [`examples/cli-config.toml`](../examples/cli-config.toml).
 
 ### **10. Machine-Readable Output**
 ```bash

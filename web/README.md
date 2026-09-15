@@ -48,7 +48,7 @@ OIDC mode uses HttpOnly session cookies for API calls. Legacy API-key mode store
 trunk serve
 ```
 
-Trunk proxies `/api/v1/` to the local controller (`127.0.0.1:8080`).
+Trunk proxies `/api/v1/` to the local controller (`127.0.0.1:8080`). Lab wiring: [docs/quickstart.md](../docs/quickstart.md). Sample `veloce-web.toml`: [`examples/veloce-web.toml`](../examples/veloce-web.toml).
 
 ### Production release
 
@@ -62,6 +62,6 @@ Serve `dist/` from the controller static path or nginx.
 
 - `leptos` / `leptos_router` — reactive UI and routing
 - `gloo-net` — HTTP and WebSocket from Wasm
-- `veloce-common` — shared cluster types and MCP protocol constants
+- `veloce-common` — shared cluster types
 - `wasm-bindgen` / `web-sys` — browser APIs
 - `chrono` — timestamps in the browser

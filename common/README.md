@@ -36,15 +36,16 @@ The primary definition of the cluster's wire protocol. It includes over 50 varia
 
 ### **Telemetry & Observability**
 - **Real-time Metrics**: High-resolution structures for host performance (CPU load, Net RX/TX, Disk IO) and individual job telemetry.
-- **Queue Analytics**: The `QueueResourceGap` model used by the KEDA scaler for demand-driven autoscaling.
+- **Queue Analytics**: `QueueResourceGap` and related models used by the scheduler and metrics API.
 
 ## 🛠 Usage
 
 This crate is the central dependency for:
-- **`veloce-controller`**: Uses the scheduler models and protocol definitions.
-- **`veloce-worker`**: Uses the resource tracking, PMI implementation, and terminal relay.
-- **`veloce-cli`**: Uses the submission models and Noise handshake.
-- **`veloce-mcp`**: Uses the schema-guaranteed tools and resource models.
+- **`veloce-controller`**: scheduler models and protocol definitions
+- **`veloce-worker`**: resource tracking, PMI, terminal/VNC relay
+- **`veloce-cli`**: submission models and Noise handshake
+- **`veloce-web`**: shared cluster types in the WASM dashboard
+- **`veloce-slurm`**: JSON job/node DTOs via the CLI
 
 ## 🏗 Dependencies
 

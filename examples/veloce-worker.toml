@@ -1,0 +1,16 @@
+# veloce-worker — copy to cwd as veloce-worker.toml
+# Env overrides: VELOCE_CONTROLLER_ADDR, VELOCE_SECRET, VELOCE_FILESERVER,
+# VELOCE_FILESERVER_KEY, VELOCE_CONTROLLERS, VELOCE_WORKER_TOKEN
+
+controller = "127.0.0.1:9000"
+cluster_secret = "CHANGE_ME_VELOCE_SECRET"
+fileserver_url = "https://127.0.0.1:9001"
+fileserver_api_key = "CHANGE_ME_VELOCE_FILESERVER_KEY"
+idle_threshold_cpu = 0.5
+idle_timeout_seconds = 600
+# prolog = "/path/to/setup.sh"
+# epilog = "/path/to/cleanup.sh"
+# run_as_worker_user = false
+
+[gres]
+# gpu = 2

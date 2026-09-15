@@ -30,14 +30,14 @@ A subset of the Amazon S3 API for local tooling and worker staging paths:
 
 ## ⚙️ Configuration
 
-Configured via `veloce-fileserver.toml`.
+Configured via `veloce-fileserver.toml` in the current working directory. Sample: [`examples/veloce-fileserver.toml`](../examples/veloce-fileserver.toml).
 
 ```toml
-bind_address = "0.0.0.0:9001"
-staging_dir = "/path/to/storage"
-api_key = "your_cluster_secret"
-cert_path = "certs/cert.pem"
-key_path = "certs/key.pem"
+bind_address = "127.0.0.1:9001"
+staging_dir = "staging"
+api_key = "..." # VELOCE_FILESERVER_KEY — not the Noise cluster secret
+cert_path = "cert.pem"
+key_path = "key.pem"
 ```
 
 ## 🏗 Dependencies

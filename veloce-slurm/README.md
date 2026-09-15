@@ -2,7 +2,7 @@ Version: 1.0.0-beta.2
 
 # veloce-slurm — Slurm front door, not a Slurm clone
 
-`veloce-slurm` is a **sidecar CLI** that speaks a familiar Slurm mouth (`sbatch`, `srun`, `squeue`, `scancel`, `sinfo`) and execs the existing [`veloce --json`](cli-json.md) client. It does **not** implement slurmd, partitions, slurmdbd, SPANK, or the Slurm wire protocol.
+`veloce-slurm` is a **sidecar CLI** that speaks a familiar Slurm mouth (`sbatch`, `srun`, `squeue`, `scancel`, `sinfo`) and execs the existing [`veloce --json`](../docs/cli-json.md) client. It does **not** implement slurmd, partitions, slurmdbd, SPANK, or the Slurm wire protocol.
 
 Install (after `cargo build -p veloce-slurm`):
 
@@ -13,9 +13,9 @@ for cmd in sbatch srun squeue scancel sinfo; do
 done
 ```
 
-`VELOCE_BIN` overrides the `veloce` binary (default: `veloce` on `PATH`). Connection secrets stay in the Veloce CLI (`~/.veloce/config.toml`, `VELOCE_*`).
+`VELOCE_BIN` overrides the `veloce` binary (default: `veloce` on `PATH`). Connection secrets stay in the Veloce CLI (`~/.veloce/config.toml`, `VELOCE_*`). JSON shapes are documented in [docs/cli-json.md](../docs/cli-json.md).
 
-This is a translation layer. Native Veloce remains API-first (REST, MCP, `veloce` CLI). See [comparison.md](comparison.md) for how this sits next to SchedMD Slurm and AMD Spur.
+This is a translation layer. Native Veloce is the HTTPS API and the `veloce` CLI.
 
 ---
 
@@ -77,7 +77,7 @@ Do not pretend these exist in Veloce:
 
 - `--partition` names that are not Veloce QoS
 - `--account`
-- `--licenses` — **not** Veloce licensing. Slurm license tokens are slurmdbd counters. Community Edition keeps the `wait_for_licenses` job field for protocol compatibility but does not query FlexLM/LM-X. The facade will **not** map `--licenses` onto that path.
+- `--licenses` — Slurm license tokens are slurmdbd counters; this facade does not map them onto Veloce jobs.
 - `--constraint` / `--nodelist` / `--exclude`
 - `--exclusive` / `--oversubscribe` / `--contiguous` / `--switches`
 - `--cpu-bind` / `--mem-bind` / `--hint` / `--ntasks-per-socket` / `--ntasks-per-node` / `--ntasks`

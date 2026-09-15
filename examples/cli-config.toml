@@ -1,0 +1,10 @@
+# Copy to ~/.veloce/config.toml (or $XDG_CONFIG_HOME/veloce/config.toml).
+# VELOCE_CONFIG points at a different path. Flags override env, env overrides this file.
+
+controllers = "127.0.0.1:9000"
+secret = "CHANGE_ME_VELOCE_SECRET"
+fileserver = "https://127.0.0.1:9001"
+fileserver_key = "CHANGE_ME_VELOCE_FILESERVER_KEY"
+api_key = "CHANGE_ME_VELOCE_API_KEY"
+client_id = "cli"
+# client_token = ""

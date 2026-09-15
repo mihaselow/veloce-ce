@@ -36,27 +36,23 @@ Utilizes a **Projected Future Occupancy Map**. It identifies the earliest start 
 - **Atomic Persistence**: Global state is persisted to `veloce_state.bin` using an **Atomic Write-Rename** cycle to ensure zero corruption on crash.
 - **Pluggable Accounting**: Supports multiple backends (Binary log, SQLite, PostgreSQL) for historical job data and telemetry.
 
-## 🤖 AI-Native Orchestration
-
-The Controller natively supports the **Model Context Protocol (MCP)**, exposing over 30 specialized engineering tools:
-- **Proactive Safety**: Pre-flight analysis to flag destructive commands (e.g., `rm`, `reboot`).
-- **Distributed Diagnostics**: A centralized log relay pulls `dmesg`/`syslog` from any worker and tails component logs in real-time.
-- **Autonomous Recovery**: Automated node remediation (process replacement) with built-in cooldowns and tiered authority.
-- **Resource Intelligence**: Analyzes historical efficiency to suggest optimal core/memory allocations.
-
 ## ⚙️ Configuration
 
-The controller is configured via `veloce.toml`.
+The controller reads `veloce.toml` (and optional `veloce-web.toml`) from the current working directory. A lab-ready sample is [`examples/veloce.toml`](../examples/veloce.toml). Lab bring-up: [docs/quickstart.md](../docs/quickstart.md).
 
 ```toml
-bind_address = "0.0.0.0:9000"
-cluster_secret = "..." # Derived from VELOCE_SECRET
+bind_address = "127.0.0.1:9000"
+cluster_secret = "..." # same value as VELOCE_SECRET on workers and the CLI
 api_port = 8080
+api_key = "..." # VELOCE_API_KEY — must not equal cluster_secret
 fileserver_url = "https://127.0.0.1:9001"
+fileserver_api_key = "..."
+cert_path = "cert.pem"
+key_path = "key.pem"
 
 [accounting]
-backend = "postgres" # or "sqlite", "file"
-database_url = "postgresql://user:pass@host:5432/db"
+backend = "file" # or "sqlite", "postgres"
+database_url = ""
 ```
 
 ## 🏗 Architecture & Internal Modules

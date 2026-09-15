@@ -1,8 +1,8 @@
-# Veloce Community Edition
+# Veloce
 
 **Version 1.0.0-beta.2** · Rust-native distributed scheduler for HPC, CAE, and AI workloads.
 
-This tree is the **Community Edition (CE)** of Veloce: a Linux control plane you can clone, build, and run. It coordinates compute with Noise-encrypted messaging, cgroup-isolated workers, Apptainer containers, MPI/CWL pipelines, a WASM dashboard, and an optional Slurm-shaped CLI sidecar.
+Veloce is a Linux control plane you can clone, build, and run. It coordinates compute with Noise-encrypted messaging, cgroup-isolated workers, Apptainer containers, MPI/CWL pipelines, a WASM dashboard, and an optional Slurm-shaped CLI sidecar.
 
 It is **source-available** under the [Business Source License 1.1](LICENSE), not MIT/Apache today. Use it on your own cluster. Do not offer it as a competing hosted or commercially distributed scheduler — see [License](#license).
 
@@ -14,56 +14,52 @@ flowchart LR
     Ctrl --> PG[("SQLite / PostgreSQL")]
 ```
 
-## What this edition includes
+## Crates
 
-| Crate | Role |
-|-------|------|
-| `controller/` | Job queue, scheduler, HTTPS API, accounting |
-| `worker/` | Job execution, cgroup v2, GRES/GPU, Apptainer, PMI |
-| `common/` | Wire protocol, scheduling models, shared types |
-| `cli/` | `veloce` management + `veloce-exec` MPI launcher |
-| `fileserver/` | HTTPS staging |
-| `web/` | Leptos WASM dashboard |
-| `veloce-slurm/` | `sbatch` / `squeue` / `srun` / `scancel` / `sinfo` facade over `veloce` |
+| Crate | Role | Docs |
+|-------|------|------|
+| [`controller/`](controller/README.md) | Job queue, scheduler, HTTPS API, accounting, HA | [Quickstart](docs/quickstart.md) |
+| [`worker/`](worker/README.md) | Job execution, cgroup v2, GRES/GPU, Apptainer, PMI | [Quickstart](docs/quickstart.md) |
+| [`common/`](common/README.md) | Wire protocol, scheduling models, shared types | crate README |
+| [`cli/`](cli/README.md) | `veloce` management + `veloce-exec` MPI launcher | [CLI JSON](docs/cli-json.md) |
+| [`fileserver/`](fileserver/README.md) | HTTPS staging and `.sif` registry | crate README |
+| [`web/`](web/README.md) | Leptos WASM dashboard | crate README |
+| [`veloce-slurm/`](veloce-slurm/README.md) | `sbatch` / `squeue` / `srun` / `scancel` / `sinfo` facade | crate README |
 
-Not in this repository (full Veloce product): MCP server, federation gateway, KEDA scaler, Windows workers, commercial solver FlexLM maps.
-
-Crate READMEs next to the source (`controller/README.md`, `worker/README.md`, `cli/README.md`, …) have flags and build notes.
+Sample TOML lives in [`examples/`](examples/). Apptainer registration is in [docs/apptainer.md](docs/apptainer.md). A crate map is in [docs/README.md](docs/README.md).
 
 ## Highlights
 
 - **Scheduling** — QoS, preemption, fair share, backfilling, gang scheduling, GRES/GPU, job arrays, CWL DAGs
-- **Security** — Noise PSK cluster mesh; API keys; job env allowlist
+- **Security** — Noise PSK cluster mesh; REST API keys; job env allowlist
 - **Containers** — Apptainer `.sif`, solver manifests
 - **Slurm front door** — `veloce-slurm` sidecar; not a Slurm clone
 
 ## Quick start
 
-Build the native binaries (not `veloce-web` — that is WASM):
+A single-node lab (self-signed TLS, file accounting) is documented end-to-end in **[docs/quickstart.md](docs/quickstart.md)**. Short version:
 
 ```bash
 cargo build --locked --release \
   -p veloce-common -p veloce-controller -p veloce-worker \
   -p veloce-cli -p veloce-fileserver -p veloce-slurm
-```
 
-Dashboard:
+# optional dashboard
+cd web && trunk build --release && cd ..
 
-```bash
-cd web && trunk build --release
-```
+export VELOCE_SECRET="$(openssl rand -base64 32)"
+export VELOCE_API_KEY="$(openssl rand -base64 32)"
+export VELOCE_FILESERVER_KEY="$(openssl rand -base64 32)"
 
-Point `VELOCE_SECRET` (and the usual controller/worker env) at a lab pair, then:
-
-```bash
+# copy examples/*.toml, fill secrets, generate cert.pem/key.pem, then:
+veloce-fileserver
+veloce-controller
+veloce-worker
+veloce doctor
 veloce submit --name baseline-run --nodes 1 --cores 1 --mem 512 /bin/sleep 5
-veloce jobs list --mine
-veloce jobs logs <JOB_ID> --follow
 ```
 
 `veloce-slurm` expects a `veloce` binary on `PATH` (or `VELOCE_BIN`).
-
-This snapshot does not yet ship the private tree’s Docker HA / lightweight compose scripts. Wire processes from the crate READMEs until a CE lab stack lands.
 
 ## License
 
@@ -75,7 +71,3 @@ Business Source License 1.1 — see [LICENSE](LICENSE).
 - On **2030-09-15**, or four years after the first public distribution of a given version (whichever is first), that version converts to **Apache License 2.0**.
 
 “Veloce” is a trademark of the Licensor. This license does not grant trademark rights.
-
-## Status
-
-Community Edition source: federation API/UI, MCP/agent, and FlexLM manager routes are stripped. Wire `Message` variants and `wait_for_licenses` / solver `LicensingConfig` fields remain for protocol compatibility. CWL, Apptainer, PMI, and HA stay in this tree.

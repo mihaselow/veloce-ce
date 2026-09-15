@@ -1,0 +1,6 @@
+# Loaded by veloce-controller from cwd as veloce-web.toml
+# VELOCE_API_KEY / VELOCE_FILESERVER_URL / VELOCE_FILESERVER_KEY override these.
+
+controller_api_key = "CHANGE_ME_VELOCE_API_KEY"
+fileserver_url = "https://127.0.0.1:9001"
+fileserver_api_key = "CHANGE_ME_VELOCE_FILESERVER_KEY"
