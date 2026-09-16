@@ -4,6 +4,8 @@ This walkthrough starts a fileserver, controller, and one worker on the same Lin
 
 **Needs:** Rust 1.94 or newer, OpenSSL CLI, Linux with cgroup v2 for real job isolation. The dashboard also needs [Trunk](https://trunkrs.dev).
 
+**Optional — Apptainer:** not required for `/bin/sleep` or other host binaries. For `.sif` / `--image` jobs, install [Apptainer](https://apptainer.org/) on **each worker host** (the machine running `veloce-worker`). A split cluster means the controller box does not need it unless that box is also a worker. Confirm with `apptainer version` on the worker before [apptainer.md](apptainer.md).
+
 ## 1. Build
 
 From the repository root:

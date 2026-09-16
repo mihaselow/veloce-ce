@@ -5,7 +5,7 @@ Guides that apply to this repository. Per-crate flags and internals live next to
 | Document | What it covers |
 |----------|----------------|
 | [quickstart.md](quickstart.md) | Build, TLS, sample configs, start fileserver + controller + worker, submit a job |
-| [apptainer.md](apptainer.md) | `.sif` images, solver manifests, `veloce containers` |
+| [apptainer.md](apptainer.md) | Optional: install Apptainer on **workers**; `.sif` registry, manifests, GPU |
 | [cwl.md](cwl.md) | CWL DAG submit (`veloce submit --cwl`) |
 | [mpi.md](mpi.md) | PMI-1/2 and `veloce-exec` for MPI |
 | [cli-json.md](cli-json.md) | `veloce --json` stdout contract |

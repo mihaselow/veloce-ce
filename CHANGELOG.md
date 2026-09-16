@@ -6,7 +6,7 @@
 - OpenTelemetry 0.32 + tracing-opentelemetry 0.33 (controller and worker)
 - `quick-xml` 0.42 and current AWS SigV4/smithy pins on the fileserver
 - Dependabot: grouped OpenTelemetry/AWS updates; ignore Cargo semver majors
-- Root README is louder (badges, why table); CWL and MPI/PMI have top-level guides
+- Call out Apptainer as an optional worker-host prerequisite (not needed on a dedicated controller)
 - jsonwebtoken `aws_lc_rs` backend (no `rsa` crate) so OIDC tests have a CryptoProvider
 - Lab REST route map, `SECURITY.md`, `rust-toolchain.toml`, `examples/hello_sleep.sh`
 - Dashboard admin/telemetry no longer labels MCP or federation nodes

@@ -13,10 +13,13 @@ To enforce strict resource boundaries, the worker implements a sophisticated **P
 - **Job Containers**: Every job is executed in a unique, strictly governed cgroup path (e.g., `/veloce/job-<id>`), preventing resource leakage and interference between tasks.
 
 ### **2. First-Class Apptainer Support**
-Natively orchestrates **Apptainer** `.sif` container images with:
+Natively orchestrates **Apptainer** `.sif` container images when the **worker host** has Apptainer installed (`apptainer` on `PATH`). This is optional: the worker runs host binaries without it. The controller/fileserver only store and register images.
+
 - **Daemonless Execution**: No persistent container daemon required.
 - **Seamless Integration**: Inherits Cgroup v2 constraints and GPU isolation natively.
 - **Automatic Staging**: Securely fetches and caches container images from the S3-compatible Veloce Fileserver.
+
+Install notes: [docs/apptainer.md](../docs/apptainer.md).
 
 ### **3. Native PMI-1/PMI-2 Implementation**
 Includes a zero-dependency implementation of the **Process Management Interface** wire protocols.

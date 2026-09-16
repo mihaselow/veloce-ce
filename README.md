@@ -31,7 +31,7 @@ flowchart LR
 
 ## Quick start
 
-**Rust 1.94+**, Linux, OpenSSL. Full walkthrough: **[docs/quickstart.md](docs/quickstart.md)**.
+**Rust 1.94+**, Linux, OpenSSL. [Apptainer](https://apptainer.org/) is **optional**: install it on every **worker** that should run `--image` / `.sif` jobs (`apptainer` on `PATH`). The controller and fileserver only store images; they do not execute them. Full walkthrough: **[docs/quickstart.md](docs/quickstart.md)**.
 
 ```bash
 cargo build --locked --release \
@@ -48,7 +48,7 @@ veloce doctor
 veloce submit --name baseline-run --nodes 1 --cores 1 --mem 512 /bin/sleep 5
 ```
 
-Dashboard: `cd web && trunk build --release`. Apptainer jobs: [docs/apptainer.md](docs/apptainer.md).
+Dashboard: `cd web && trunk build --release`. Container jobs: [docs/apptainer.md](docs/apptainer.md) (Apptainer on the worker).
 
 ## Documentation
 
