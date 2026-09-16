@@ -99,5 +99,7 @@ Persistent CLI defaults (optional): copy [`examples/cli-config.toml`](../example
 ## Next
 
 - Container jobs: [apptainer.md](apptainer.md)
+- CWL DAGs: [cwl.md](cwl.md)
+- MPI / PMI: [mpi.md](mpi.md)
 - Scriptable CLI: [cli-json.md](cli-json.md)
 - Slurm-shaped commands: [veloce-slurm/README.md](../veloce-slurm/README.md)

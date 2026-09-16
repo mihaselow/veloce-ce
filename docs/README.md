@@ -5,9 +5,11 @@ Guides that apply to this repository. Per-crate flags and internals live next to
 | Document | What it covers |
 |----------|----------------|
 | [quickstart.md](quickstart.md) | Build, TLS, sample configs, start fileserver + controller + worker, submit a job |
+| [apptainer.md](apptainer.md) | `.sif` images, solver manifests, `veloce containers` |
+| [cwl.md](cwl.md) | CWL DAG submit (`veloce submit --cwl`) |
+| [mpi.md](mpi.md) | PMI-1/2 and `veloce-exec` for MPI |
 | [cli-json.md](cli-json.md) | `veloce --json` stdout contract |
 | [rest.md](rest.md) | Controller HTTPS routes in this tree |
-| [apptainer.md](apptainer.md) | `.sif` images, solver manifests, `veloce containers` |
 
 | Crate README | Binary / library |
 |--------------|------------------|
