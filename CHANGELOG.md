@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Persist per-worker log file IDs after multi-node completion so history `--rank` / `?rank=` work ([veloce-ce#4](https://github.com/mihaselow/veloce-ce/issues/4)); parent Veloce tree: replay later referencing https://github.com/mihaselow/veloce-ce/issues/4
+## 1.0.0-beta.3
+
+- Persist per-worker log file IDs after multi-node completion so history `--rank` / `?rank=` work ([#4](https://github.com/mihaselow/veloce-ce/issues/4))
 - GitHub Actions release packages (amd64 `.tar.gz` / `.deb` / `.rpm` via nfpm); `veloce-cli` includes `veloce-exec`
 - MSRV `1.94`; SQLx 0.9 without MySQL/rsa so Dependabot no longer flags Marvin
 - OpenTelemetry 0.32 + tracing-opentelemetry 0.33 (controller and worker)
