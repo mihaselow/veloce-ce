@@ -19,15 +19,15 @@ tower-http = { version = "0.5", features = ["cors"] }
 clap = { version = "4.0", features = ["derive", "env"] }
 reqwest = { version = "0.12", features = ["stream", "json"] }
 tracing-appender = "0.2"
-aws-sigv4 = "1.4.4"
-aws-credential-types = "1.2.14"
-aws-smithy-http = "0.63.6"
-aws-smithy-runtime-api = "1.12.1"
+aws-sigv4 = "=1.5.1"
+aws-credential-types = "1.3"
+aws-smithy-runtime-api = "=1.16.2"
+aws-smithy-types = "=1.6.4"
 http = "1.4.0"
 time = "0.3.36"
 hex = "0.4.3"
 http-body-util = "0.1.3"
-quick-xml = { version = "0.40.1", features = ["serialize"] }
+quick-xml = { version = "0.42", features = ["serialize"] }
 walkdir = "2.5.0"
 serde_json = "1.0.149"
 md5 = "0.8.0"

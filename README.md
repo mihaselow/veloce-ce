@@ -49,7 +49,7 @@ If you need a SchedMD cluster, use Slurm. If you want a Rust scheduler you can b
 
 ## Quick start
 
-A single-node lab (self-signed TLS, file accounting) is documented end-to-end in **[docs/quickstart.md](docs/quickstart.md)**. Short version:
+Requires **Rust 1.90+**. A single-node lab (self-signed TLS, file accounting) is documented end-to-end in **[docs/quickstart.md](docs/quickstart.md)**. Short version:
 
 ```bash
 cargo build --locked --release \

@@ -1,6 +1,6 @@
-use opentelemetry::KeyValue;
+use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::trace::Tracer;
+use opentelemetry_sdk::trace::{SdkTracerProvider, Tracer};
 use opentelemetry_sdk::Resource;
 
 pub fn otlp_disabled() -> bool {
@@ -27,27 +27,25 @@ pub fn try_otlp_tracer(worker_id: &str) -> Option<Tracer> {
     let endpoint = otlp_endpoint()?;
     let service_name = service_name(worker_id);
 
-    let exporter = opentelemetry_otlp::new_exporter()
-        .tonic()
-        .with_endpoint(endpoint.clone());
-
-    match opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_exporter(exporter)
-        .with_trace_config(
-            opentelemetry_sdk::trace::config().with_resource(Resource::new(vec![KeyValue::new(
-                "service.name",
-                service_name,
-            )])),
-        )
-        .install_batch(opentelemetry_sdk::runtime::Tokio)
+    let exporter = match opentelemetry_otlp::SpanExporter::builder()
+        .with_tonic()
+        .with_endpoint(endpoint.clone())
+        .build()
     {
-        Ok(tracer) => Some(tracer),
+        Ok(exporter) => exporter,
         Err(e) => {
             eprintln!("OTLP tracing disabled (endpoint={endpoint}): {e}");
-            None
+            return None;
         }
-    }
+    };
+
+    let provider = SdkTracerProvider::builder()
+        .with_batch_exporter(exporter)
+        .with_resource(Resource::builder().with_service_name(service_name).build())
+        .build();
+    let tracer = provider.tracer("veloce-worker");
+    opentelemetry::global::set_tracer_provider(provider);
+    Some(tracer)
 }
 
 #[cfg(test)]

@@ -2,7 +2,7 @@
 
 This walkthrough starts a fileserver, controller, and one worker on the same Linux host. It uses self-signed TLS and file-backed accounting. Use it to confirm a build; do not copy the self-signed certs or example keys into a real cluster.
 
-**Needs:** Rust (stable), OpenSSL CLI, Linux with cgroup v2 for real job isolation. The dashboard also needs [Trunk](https://trunkrs.dev).
+**Needs:** Rust 1.90 or newer, OpenSSL CLI, Linux with cgroup v2 for real job isolation. The dashboard also needs [Trunk](https://trunkrs.dev).
 
 ## 1. Build
 

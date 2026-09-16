@@ -3,6 +3,7 @@ use accounting::AccountingStore;
 use anyhow::{Context, Result};
 use clap::Parser;
 use dashmap::DashMap;
+use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_otlp::WithExportConfig;
 use reqwest;
 use serde_json;
@@ -126,15 +127,17 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<()> {
     // 1. Initialize tracing as early as possible
-    let otlp_exporter = opentelemetry_otlp::new_exporter()
-        .tonic()
-        .with_endpoint("http://jaeger:4317"); // Internal stack address
+    let otlp_exporter = opentelemetry_otlp::SpanExporter::builder()
+        .with_tonic()
+        .with_endpoint("http://jaeger:4317")
+        .build()
+        .expect("Failed to build OTLP span exporter");
 
-    let tracer = opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_exporter(otlp_exporter)
-        .install_batch(opentelemetry_sdk::runtime::Tokio)
-        .expect("Failed to install OTLP tracer");
+    let tracer_provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
+        .with_batch_exporter(otlp_exporter)
+        .build();
+    let tracer = tracer_provider.tracer("veloce-controller");
+    opentelemetry::global::set_tracer_provider(tracer_provider);
 
     let file_appender = tracing_appender::rolling::never(".", "veloce-controller.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
