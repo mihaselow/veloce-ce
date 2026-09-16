@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- GitHub Actions release packages (amd64 `.tar.gz` / `.deb` / `.rpm` via nfpm); `veloce-cli` includes `veloce-exec`
 - MSRV `1.94`; SQLx 0.9 without MySQL/rsa so Dependabot no longer flags Marvin
 - OpenTelemetry 0.32 + tracing-opentelemetry 0.33 (controller and worker)
 - `quick-xml` 0.42 and current AWS SigV4/smithy pins on the fileserver

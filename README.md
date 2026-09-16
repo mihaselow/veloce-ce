@@ -48,13 +48,14 @@ veloce doctor
 veloce submit --name baseline-run --nodes 1 --cores 1 --mem 512 /bin/sleep 5
 ```
 
-Dashboard: `cd web && trunk build --release`. Container jobs: [docs/apptainer.md](docs/apptainer.md) (Apptainer on the worker).
+Dashboard: `cd web && trunk build --release`. Container jobs: [docs/apptainer.md](docs/apptainer.md) (Apptainer on the worker). Prebuilt **amd64** `.deb` / `.rpm` / `.tar.gz` (including `veloce` + `veloce-exec`) ship on [GitHub Releases](https://github.com/mihaselow/veloce-ce/releases) — see [packaging/README.md](packaging/README.md).
 
 ## Documentation
 
 | Guide | What you get |
 |-------|----------------|
 | [Quickstart](docs/quickstart.md) | Lab TLS, sample TOML, three daemons, first job |
+| [Packaging](packaging/README.md) | Role packages, systemd templates, release workflow |
 | [Apptainer](docs/apptainer.md) | `.sif` registry, solver manifests, `veloce containers`, GPU |
 | [CWL](docs/cwl.md) | DAG submit from YAML (`veloce submit --cwl`) |
 | [MPI / PMI](docs/mpi.md) | In-tree PMI, `veloce-exec`, OpenMPI `plm_rsh_agent` |

@@ -1,4 +1,6 @@
 /target
+/build/
+/dist/
 **/*.rs.bk
 .DS_Store
 build_log.txt

@@ -1,0 +1,24 @@
+name: veloce-cli
+arch: ${ARCH}
+platform: linux
+version: ${VERSION}
+section: utils
+priority: optional
+maintainer: Michael Haselow <hello@veloce-hpc.io>
+description: Veloce CLI (veloce + veloce-exec)
+vendor: Veloce
+license: Business Source License 1.1
+contents:
+  - src: ./build/stage/veloce-cli/usr/bin/veloce
+    dst: /usr/bin/veloce
+    file_info:
+      mode: 0755
+  - src: ./build/stage/veloce-cli/usr/bin/veloce-exec
+    dst: /usr/bin/veloce-exec
+    file_info:
+      mode: 0755
+  - src: ./build/stage/veloce-cli/etc/veloce/cli-config.toml.example
+    dst: /etc/veloce/cli-config.toml.example
+    file_info:
+      mode: 0644
+    type: config|noreplace

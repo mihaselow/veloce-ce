@@ -1,0 +1,24 @@
+name: veloce-fileserver
+arch: ${ARCH}
+platform: linux
+version: ${VERSION}
+section: utils
+priority: optional
+maintainer: Michael Haselow <hello@veloce-hpc.io>
+description: Veloce fileserver
+vendor: Veloce
+license: Business Source License 1.1
+contents:
+  - src: ./build/stage/veloce-fileserver/usr/bin/veloce-fileserver
+    dst: /usr/bin/veloce-fileserver
+    file_info:
+      mode: 0755
+  - src: ./build/stage/veloce-fileserver/etc/veloce/veloce-fileserver.toml.example
+    dst: /etc/veloce/veloce-fileserver.toml.example
+    file_info:
+      mode: 0644
+    type: config|noreplace
+  - src: ./build/stage/veloce-fileserver/lib/systemd/system/veloce-fileserver.service
+    dst: /lib/systemd/system/veloce-fileserver.service
+    file_info:
+      mode: 0644

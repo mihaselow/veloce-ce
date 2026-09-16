@@ -1,0 +1,16 @@
+[Unit]
+Description=Veloce Worker
+After=network.target
+Documentation=https://github.com/mihaselow/veloce-ce
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/veloce-worker --controller 127.0.0.1:9000
+WorkingDirectory=/var/lib/veloce
+Restart=on-failure
+Environment=RUST_LOG=info
+# Environment=VELOCE_SECRET=
+
+[Install]
+WantedBy=multi-user.target

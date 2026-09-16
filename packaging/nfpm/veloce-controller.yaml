@@ -1,0 +1,24 @@
+name: veloce-controller
+arch: ${ARCH}
+platform: linux
+version: ${VERSION}
+section: utils
+priority: optional
+maintainer: Michael Haselow <hello@veloce-hpc.io>
+description: Veloce controller
+vendor: Veloce
+license: Business Source License 1.1
+contents:
+  - src: ./build/stage/veloce-controller/usr/bin/veloce-controller
+    dst: /usr/bin/veloce-controller
+    file_info:
+      mode: 0755
+  - src: ./build/stage/veloce-controller/etc/veloce/veloce.toml.example
+    dst: /etc/veloce/veloce.toml.example
+    file_info:
+      mode: 0644
+    type: config|noreplace
+  - src: ./build/stage/veloce-controller/lib/systemd/system/veloce-controller.service
+    dst: /lib/systemd/system/veloce-controller.service
+    file_info:
+      mode: 0644

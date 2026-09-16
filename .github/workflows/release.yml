@@ -1,0 +1,85 @@
+name: Release packages
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  ARCH: amd64
+
+jobs:
+  packages:
+    name: linux-amd64 packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler libssl-dev pkg-config rpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Resolve version
+        id: ver
+        run: |
+          CRATE="$(./packaging/scripts/version.sh print)"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            ./packaging/scripts/version.sh check-tag "${GITHUB_REF_NAME}"
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            echo "upload_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${CRATE}" >> "$GITHUB_OUTPUT"
+            echo "upload_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release binaries
+        run: |
+          cargo build --locked --release \
+            -p veloce-controller \
+            -p veloce-worker \
+            -p veloce-fileserver \
+            -p veloce-cli
+
+      - name: Install nfpm
+        run: |
+          curl -sL "https://github.com/goreleaser/nfpm/releases/download/v2.41.3/nfpm_2.41.3_Linux_x86_64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin nfpm
+          nfpm --version
+
+      - name: Stage, tarball, and package
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          for p in veloce-controller veloce-worker veloce-fileserver veloce-cli; do
+            ./packaging/scripts/stage-root.sh "$p" "build/stage/$p"
+            ./packaging/scripts/make-tarball.sh "$p"
+            nfpm package -f "packaging/nfpm/${p}.yaml" -p deb -t dist/
+            nfpm package -f "packaging/nfpm/${p}.yaml" -p rpm -t dist/
+          done
+          (cd dist && sha256sum * > SHA256SUMS)
+          ./packaging/scripts/smoke-debs.sh dist
+          sha256sum -c dist/SHA256SUMS
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: veloce-ce-linux-amd64-${{ steps.ver.outputs.version }}
+          path: dist/*
+
+      - name: Attach to GitHub Release
+        if: steps.ver.outputs.upload_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          fail_on_unmatched_files: true

@@ -1,0 +1,15 @@
+[Unit]
+Description=Veloce Fileserver
+After=network.target
+Documentation=https://github.com/mihaselow/veloce-ce
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/veloce-fileserver --config /etc/veloce/veloce-fileserver.toml
+WorkingDirectory=/var/lib/veloce
+Restart=on-failure
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=multi-user.target
