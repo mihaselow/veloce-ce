@@ -4,32 +4,6 @@ use leptos::*;
 use std::collections::{BTreeMap, VecDeque};
 use veloce_common::{ControllerInfo, JobInfo, JobStatus, WorkerInfo};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[allow(dead_code)] // topology still draws these states; CE always stays NotConfigured
-enum FederationGatewayStatus {
-    NotConfigured,
-    Online,
-    Degraded,
-    Offline,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct FederationGatewayHealth {
-    status: FederationGatewayStatus,
-    peer_count: usize,
-    warning_count: usize,
-}
-
-impl Default for FederationGatewayHealth {
-    fn default() -> Self {
-        Self {
-            status: FederationGatewayStatus::NotConfigured,
-            peer_count: 0,
-            warning_count: 0,
-        }
-    }
-}
-
 // Helper to generate sparkline SVG paths
 pub(crate) fn generate_sparkline_path(history: &VecDeque<f32>, max_val: f32) -> (String, String) {
     if history.is_empty() {
@@ -258,8 +232,6 @@ pub fn TelemetryPage(
     controller_online: Signal<bool>,
     fileserver_online: Signal<bool>,
 ) -> impl IntoView {
-    let mcp_online = Signal::derive(|| false);
-    let federation_gateway_health = Signal::derive(FederationGatewayHealth::default);
     let (cpu_history, set_cpu_history) = create_signal(VecDeque::<f32>::new());
     let (mem_history, set_mem_history) = create_signal(VecDeque::<f32>::new());
     let (net_history, set_net_history) = create_signal(VecDeque::<f32>::new());
@@ -637,19 +609,9 @@ pub fn TelemetryPage(
                                     .iter()
                                     .map(|worker| worker.total_cores.saturating_sub(worker.available_cores))
                                     .sum::<usize>();
-                                let mcp_online_status = mcp_online.get();
                                 let ctrl_online_status = controller_online.get();
                                 let fs_online_status = fileserver_online.get();
-                                let fed_health = federation_gateway_health.get();
-                                let fed_reachable = matches!(
-                                    fed_health.status,
-                                    FederationGatewayStatus::Online | FederationGatewayStatus::Degraded
-                                );
 
-                                let fed_x = 300.0;
-                                let fed_y = 35.0;
-                                let mcp_x = 190.0;
-                                let mcp_y = 205.0;
                                 let fs_x = 410.0;
                                 let fs_y = 205.0;
                                 let compute_x = 300.0;
@@ -683,43 +645,7 @@ pub fn TelemetryPage(
                                     ctrl_positions.push((cx, cy, ctrl.clone()));
                                 }
 
-                                let has_leader = ctrl_positions
-                                    .iter()
-                                    .any(|(_, _, ctrl)| ctrl.role.to_lowercase() == "leader");
-
-                                for (idx, &(cx, cy, ref ctrl)) in ctrl_positions.iter().enumerate() {
-                                    let is_leader = ctrl.role.to_lowercase() == "leader";
-                                    let is_gateway_target = is_leader || (!has_leader && idx == 0);
-
-                                    if is_leader {
-                                        if mcp_online_status && ctrl.online {
-                                            connections.push(view! {
-                                                <line x1={mcp_x} y1={mcp_y} x2={cx} y2={cy} stroke="var(--ds-cyan-glow)" stroke-width="1.5" opacity="0.8" class="ds-flow-line"/>
-                                            });
-                                        } else {
-                                            connections.push(view! {
-                                                <line x1={mcp_x} y1={mcp_y} x2={cx} y2={cy} stroke="#4a5d6e" stroke-width="1" stroke-dasharray="2 4" opacity="0.5"/>
-                                            });
-                                        }
-                                    }
-
-                                    if is_gateway_target {
-                                        if fed_reachable && ctrl.online {
-                                            let stroke = if fed_health.status == FederationGatewayStatus::Degraded {
-                                                "var(--ds-orange-glow)"
-                                            } else {
-                                                "var(--ds-cyan-glow)"
-                                            };
-                                            connections.push(view! {
-                                                <line x1={fed_x} y1={fed_y} x2={cx} y2={cy} stroke={stroke} stroke-width="1.3" opacity="0.75" class="ds-flow-line"/>
-                                            });
-                                        } else {
-                                            connections.push(view! {
-                                                <line x1={fed_x} y1={fed_y} x2={cx} y2={cy} stroke="#4a5d6e" stroke-width="1" stroke-dasharray="2 4" opacity="0.5"/>
-                                            });
-                                        }
-                                    }
-
+                                for &(cx, cy, ref ctrl) in ctrl_positions.iter() {
                                     if ctrl.online && fs_online_status {
                                         connections.push(view! {
                                             <line x1={cx} y1={cy} x2={fs_x} y2={fs_y} stroke="var(--ds-orange-glow)" stroke-width="1.2" opacity="0.7"/>
@@ -735,16 +661,6 @@ pub fn TelemetryPage(
                                             <line x1={cx} y1={cy} x2={compute_x} y2={compute_y} stroke="#4a5d6e" stroke-width="0.8" stroke-dasharray="2 4" opacity="0.35"/>
                                         });
                                     }
-                                }
-
-                                if mcp_online_status && fs_online_status {
-                                    connections.push(view! {
-                                        <line x1={mcp_x} y1={mcp_y} x2={fs_x} y2={fs_y} stroke="var(--ds-cyan-glow)" stroke-width="1.5" opacity="0.8" class="ds-flow-line"/>
-                                    });
-                                } else {
-                                    connections.push(view! {
-                                        <line x1={mcp_x} y1={mcp_y} x2={fs_x} y2={fs_y} stroke="#4a5d6e" stroke-width="1" stroke-dasharray="2 4" opacity="0.5"/>
-                                    });
                                 }
 
                                 if fs_online_status {
@@ -795,59 +711,6 @@ pub fn TelemetryPage(
                                         </text>
                                         <text x="0" y="34" fill="var(--ds-text-muted)" font-size="8" font-family="monospace" text-anchor="middle">
                                             {format!("{} NODES · {}/{} CORES", worker_count, worker_busy_cores, worker_cores)}
-                                        </text>
-                                    </g>
-                                });
-
-                                let mcp_top = if mcp_online_status { "#e0f7fa" } else { "#eceff1" };
-                                let mcp_left = if mcp_online_status { "#00bcd4" } else { "#90a4ae" };
-                                let mcp_right = if mcp_online_status { "#0097a7" } else { "#78909c" };
-                                let mcp_filter = if mcp_online_status { "url(#ds-glow-cyan)" } else { "" };
-                                nodes_rendered.push(view! {
-                                    <g transform={format!("translate({}, {})", mcp_x, mcp_y)} filter={mcp_filter}>
-                                        <g>
-                                            <path d="M-12,-6 L0,-12 L12,-6 L0,0 Z" fill={mcp_top}/>
-                                            <path d="M-12,-6 L-12,6 L0,12 L0,0 Z" fill={mcp_left}/>
-                                            <path d="M12,-6 L12,6 L0,12 L0,0 Z" fill={mcp_right}/>
-                                        </g>
-                                        <text x="0" y="-18" fill="var(--ds-cyan-glow)" font-size="11" font-weight="700" text-anchor="middle" class="ds-svg-glow-cyan">
-                                            "MCP CORE"
-                                        </text>
-                                        <text x="0" y="22" fill="var(--ds-text-muted)" font-size="8" font-family="monospace" text-anchor="middle">
-                                            {if mcp_online_status { "ONLINE" } else { "OFFLINE" }}
-                                        </text>
-                                    </g>
-                                });
-
-                                let (fed_top, fed_left, fed_right, fed_label_fill, fed_filter) = match fed_health.status {
-                                    FederationGatewayStatus::Online => ("#e0f7fa", "#00bcd4", "#0097a7", "var(--ds-cyan-glow)", "url(#ds-glow-cyan)"),
-                                    FederationGatewayStatus::Degraded => ("#fff3e0", "#ffb74d", "#f57c00", "var(--ds-orange-glow)", "url(#ds-glow-orange)"),
-                                    FederationGatewayStatus::Offline => ("#ffebee", "#ef5350", "#c62828", "#ef9a9a", ""),
-                                    FederationGatewayStatus::NotConfigured => ("#eceff1", "#90a4ae", "#78909c", "#b0bec5", ""),
-                                };
-                                let fed_status_text = match fed_health.status {
-                                    FederationGatewayStatus::Online if fed_health.peer_count > 0 => {
-                                        format!("{} PEER{}", fed_health.peer_count, if fed_health.peer_count == 1 { "" } else { "S" })
-                                    }
-                                    FederationGatewayStatus::Online => "ONLINE".to_string(),
-                                    FederationGatewayStatus::Degraded => {
-                                        format!("{} WARN{}", fed_health.warning_count, if fed_health.warning_count == 1 { "" } else { "S" })
-                                    }
-                                    FederationGatewayStatus::Offline => "OFFLINE".to_string(),
-                                    FederationGatewayStatus::NotConfigured => "LOCAL ONLY".to_string(),
-                                };
-                                nodes_rendered.push(view! {
-                                    <g transform={format!("translate({}, {})", fed_x, fed_y)} filter={fed_filter}>
-                                        <g>
-                                            <path d="M-12,-6 L0,-12 L12,-6 L0,0 Z" fill={fed_top}/>
-                                            <path d="M-12,-6 L-12,6 L0,12 L0,0 Z" fill={fed_left}/>
-                                            <path d="M12,-6 L12,6 L0,12 L0,0 Z" fill={fed_right}/>
-                                        </g>
-                                        <text x="0" y="-18" fill={fed_label_fill} font-size="11" font-weight="700" text-anchor="middle">
-                                            "FEDERATION"
-                                        </text>
-                                        <text x="0" y="22" fill="var(--ds-text-muted)" font-size="8" font-family="monospace" text-anchor="middle">
-                                            {fed_status_text}
                                         </text>
                                     </g>
                                 });
@@ -1188,14 +1051,8 @@ pub fn TelemetryPage(
 
                             {move || {
                                 let controller_online_state = controller_online.get();
-                                let mcp_online_state = mcp_online.get();
-
-                                let (cyan_val, orange_val) = match (controller_online_state, mcp_online_state) {
-                                    (true, true) => (180.0f32, 50.0f32),
-                                    (true, false) => (100.0f32, 20.0f32),
-                                    (false, true) => (80.0f32, 10.0f32),
-                                    _ => (0.0f32, 0.0f32),
-                                };
+                                let cyan_val = if controller_online_state { 180.0f32 } else { 0.0f32 };
+                                let orange_val = if fileserver_online.get() { 50.0f32 } else { 0.0f32 };
 
                                 view! {
                                     <g>

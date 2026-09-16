@@ -88,6 +88,8 @@ veloce jobs list --mine
 veloce jobs logs <JOB_ID> --follow
 ```
 
+Once the CLI works, [`examples/hello_sleep.sh`](../examples/hello_sleep.sh) submits the same sleep job via `--json`.
+
 Persistent CLI defaults (optional): copy [`examples/cli-config.toml`](../examples/cli-config.toml) to `~/.veloce/config.toml`. Flags override environment variables, which override that file.
 
 ## 6. Dashboard

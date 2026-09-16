@@ -134,7 +134,7 @@ pub fn AdminPage() -> impl IntoView {
 
     let fetch_logs = move |_| {
         set_logs.set(
-            "MCP is not included in Community Edition. Use the CLI for component logs.".to_string(),
+            "Use the veloce CLI for component logs (for example `veloce doctor` and host journalctl).".to_string(),
         );
     };
 
@@ -187,7 +187,7 @@ pub fn AdminPage() -> impl IntoView {
 
     let trigger_remediation = move |_| {
         set_remediation_status
-            .set("Remediation via MCP is not included in Community Edition.".to_string());
+            .set("Autonomous node remediation is not available in this build.".to_string());
     };
 
     view! {
@@ -265,10 +265,10 @@ pub fn AdminPage() -> impl IntoView {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <div>
                     <h2 style="margin: 0; font-weight: 700; font-size: 1.75rem;">"Admin Portal"</h2>
-                    <p class="subtitle" style="margin: 0.25rem 0 0 0; opacity: 0.7;">"Diagnostic Monitoring & Autonomous Remediation Interface"</p>
+                    <p class="subtitle" style="margin: 0.25rem 0 0 0; opacity: 0.7;">"Node telemetry and diagnostics"</p>
                 </div>
                 <div class="badge running" style="padding: 0.5rem 1rem;">
-                    <i class="ph ph-shield-checkered"></i> "MCP SECURE SESSION"
+                    <i class="ph ph-shield-checkered"></i> "CLUSTER ADMIN"
                 </div>
             </div>
 
@@ -323,7 +323,6 @@ pub fn AdminPage() -> impl IntoView {
                                             }
                                         }}
                                         <option value="fileserver" selected=move || selected_component.get() == "fileserver">"Fileserver"</option>
-                                        <option value="mcp" selected=move || selected_component.get() == "mcp">"MCP Server"</option>
                                     </optgroup>
                                     <optgroup label="Compute Nodes">
                                         {move || nodes.get().into_iter().map(|n| {
@@ -381,7 +380,6 @@ pub fn AdminPage() -> impl IntoView {
                                                 }
                                             }}
                                             <option value="fileserver">"Fileserver"</option>
-                                            <option value="mcp">"MCP Server"</option>
                                         </optgroup>
                                         <optgroup label="Compute Nodes">
                                             {move || nodes.get().into_iter().map(|n| {

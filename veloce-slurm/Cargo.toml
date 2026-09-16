@@ -2,6 +2,7 @@
 name = "veloce-slurm"
 version = "1.0.0-beta.2"
 edition = "2021"
+rust-version.workspace = true
 description = "Slurm-shaped CLI facade over the Veloce CLI (sbatch/srun/squeue/scancel/sinfo)"
 publish = false
 

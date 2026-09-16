@@ -6,6 +6,7 @@ Guides that apply to this repository. Per-crate flags and internals live next to
 |----------|----------------|
 | [quickstart.md](quickstart.md) | Build, TLS, sample configs, start fileserver + controller + worker, submit a job |
 | [cli-json.md](cli-json.md) | `veloce --json` stdout contract |
+| [rest.md](rest.md) | Controller HTTPS routes in this tree |
 | [apptainer.md](apptainer.md) | `.sif` images, solver manifests, `veloce containers` |
 
 | Crate README | Binary / library |

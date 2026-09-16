@@ -9,3 +9,6 @@ members = [
     "veloce-slurm",
 ]
 resolver = "2"
+
+[workspace.package]
+rust-version = "1.85"

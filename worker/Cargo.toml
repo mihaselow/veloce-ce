@@ -2,6 +2,7 @@
 name = "veloce-worker"
 version = "1.0.0-beta.2"
 edition = "2021"
+rust-version.workspace = true
 
 [dependencies]
 veloce-common = { path = "../common" }

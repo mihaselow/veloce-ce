@@ -120,12 +120,7 @@ impl JwksCache {
 }
 
 fn decoding_key_from_jwk(jwk: &Jwk) -> Result<DecodingKey, jsonwebtoken::errors::Error> {
-    match &jwk.algorithm {
-        jsonwebtoken::jwk::AlgorithmParameters::RSA(rsa) => {
-            DecodingKey::from_rsa_components(&rsa.n, &rsa.e)
-        }
-        _ => Err(jsonwebtoken::errors::ErrorKind::InvalidAlgorithmName.into()),
-    }
+    DecodingKey::from_jwk(jwk)
 }
 
 struct OidcConfig {
