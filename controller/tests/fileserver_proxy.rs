@@ -3,8 +3,11 @@ use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::time::Duration;
 
+#[path = "helpers/test_certs.rs"]
+mod test_certs;
+
 fn workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
+    test_certs::workspace_root()
 }
 
 fn controller_binary() -> PathBuf {
@@ -114,6 +117,7 @@ struct TestController {
 
 impl TestController {
     fn start(fileserver_url: &str) -> Self {
+        test_certs::ensure_test_certs();
         let log_file =
             std::fs::File::create("../controller_fileserver_proxy_test_run.log").unwrap();
         let child = Command::new(controller_binary())

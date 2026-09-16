@@ -10,8 +10,11 @@ use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+#[path = "helpers/test_certs.rs"]
+mod test_certs;
+
 fn workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
+    test_certs::workspace_root()
 }
 
 fn controller_binary() -> PathBuf {
@@ -125,6 +128,7 @@ struct TestServer {
 
 impl TestServer {
     fn start() -> Self {
+        test_certs::ensure_test_certs();
         let log_file = std::fs::File::create("../controller_test_run.log").unwrap();
         let child = Command::new(controller_binary())
             .current_dir(workspace_root())
@@ -480,6 +484,7 @@ impl CustomTestServer {
         let log_file =
             std::fs::File::create(format!("../controller_test_run_{}.log", port)).unwrap();
         let mut cmd = Command::new(controller_binary());
+        test_certs::ensure_test_certs();
         cmd.current_dir(workspace_root()).args(&[
             "--api-port",
             &port.to_string(),
@@ -503,6 +508,7 @@ impl CustomTestServer {
             cmd.env("VELOCE_API_KEYS", json);
         }
         cmd.env("VELOCE_CONTAINER_DB_URL", "sqlite://");
+        cmd.env("VELOCE_FILESERVER_KEY", "test-fileserver-key");
         cmd.env("FUSIONAUTH_CLIENT_ID", "veloce-web");
         cmd.env("FUSIONAUTH_CLIENT_SECRET", "test-secret");
         cmd.env("FUSIONAUTH_APP_URL", "http://127.0.0.1:8989");
@@ -612,6 +618,7 @@ async fn test_static_api_keys_and_secret_deprecation() {
 
 #[tokio::test]
 async fn test_validate_production_config_exit() {
+    test_certs::ensure_test_certs();
     let log_file = std::fs::File::create("../controller_test_run_exit.log").unwrap();
     let mut child = Command::new(controller_binary())
         .current_dir(workspace_root())

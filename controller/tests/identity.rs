@@ -11,8 +11,11 @@ use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 use veloce_common::{Message, MessageCodec};
 
+#[path = "helpers/test_certs.rs"]
+mod test_certs;
+
 fn workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
+    test_certs::workspace_root()
 }
 
 fn controller_binary() -> PathBuf {
@@ -42,6 +45,7 @@ impl CustomTestServer {
         secret: &str,
         static_keys_json: Option<&str>,
     ) -> Self {
+        test_certs::ensure_test_certs();
         let log_file =
             std::fs::File::create(format!("../controller_identity_test_run_{}.log", port)).unwrap();
         let mut cmd = Command::new(controller_binary());

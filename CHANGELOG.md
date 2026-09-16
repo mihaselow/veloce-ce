@@ -6,7 +6,8 @@
 - OpenTelemetry 0.32 + tracing-opentelemetry 0.33 (controller and worker)
 - `quick-xml` 0.42 and current AWS SigV4/smithy pins on the fileserver
 - Dependabot: grouped OpenTelemetry/AWS updates; ignore Cargo semver majors
-- GitHub Actions CI (fmt, clippy, test, locked build, WASM check)
+- Mint throwaway `certs/` TLS files in controller integration tests so CI can start the API
+- jsonwebtoken `aws_lc_rs` backend (no `rsa` crate) so OIDC tests have a CryptoProvider
 - Lab REST route map, `SECURITY.md`, `rust-toolchain.toml`, `examples/hello_sleep.sh`
 - Dashboard admin/telemetry no longer labels MCP or federation nodes
 - `jsonwebtoken` 10.x for controller OIDC

@@ -2,3 +2,12 @@
 **/*.rs.bk
 .DS_Store
 build_log.txt
+/certs/
+
+# Controller runtime and integration-test leftovers
+*.bin
+veloce-controller.log
+controller_test_run*.log
+controller_*test_run*.log
+controller_test_run_exit.log
+
