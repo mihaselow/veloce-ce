@@ -317,6 +317,9 @@ pub struct JobInfo {
     pub stdout_file_id: Option<String>,
     pub stderr_file_id: Option<String>,
     pub workdir_file_id: Option<String>,
+    /// Per-worker log object ids for multi-node rank resolution after completion.
+    #[serde(default)]
+    pub worker_log_files: HashMap<String, WorkerLogFiles>,
     #[serde(default)]
     pub output_artifacts: Vec<JobOutputArtifact>,
     #[serde(default)]
@@ -482,6 +485,14 @@ pub enum JobStateFilter {
     Killed,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
+pub struct WorkerLogFiles {
+    #[serde(default)]
+    pub stdout_file_id: Option<String>,
+    #[serde(default)]
+    pub stderr_file_id: Option<String>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JobUsage {
     pub job_id: u64,
@@ -515,6 +526,11 @@ pub struct JobUsage {
     pub stderr_file_id: Option<String>,
     #[serde(default)]
     pub workdir_file_id: Option<String>,
+    /// Per-worker log object ids (worker_id → stdout/stderr). Required so completed
+    /// multi-node jobs can still resolve `--rank` / `?rank=` after in-memory tracking
+    /// is cleared. See veloce-ce#4.
+    #[serde(default)]
+    pub worker_log_files: HashMap<String, WorkerLogFiles>,
     #[serde(default)]
     pub output_artifacts: Vec<JobOutputArtifact>,
     #[serde(default)]

@@ -22,7 +22,7 @@ use tokio_util::codec::Framed;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 use veloce_common::{
-    HistoryFilter, JobInfo, JobStatus, LogType, Message, MessageCodec, PeerMessage, QosLevel,
+    HistoryFilter, JobInfo, JobStatus, Message, MessageCodec, PeerMessage, QosLevel,
 };
 
 pub fn is_authorized(msg: &Message, roles: &[String]) -> bool {
@@ -225,6 +225,7 @@ where
                                     stdout_file_id: None,
                                     stderr_file_id: None,
                                     workdir_file_id: None,
+                                    worker_log_files: Default::default(),
                                     output_artifacts: Vec::new(),
                                     wait_for_licenses,
                                     estimated_walltime,
@@ -355,6 +356,7 @@ where
                                 stdout_file_id: None,
                                 stderr_file_id: None,
                                 workdir_file_id: None,
+                                worker_log_files: Default::default(),
                                 output_artifacts: Vec::new(),
                                 wait_for_licenses,
                                 estimated_walltime,
@@ -524,6 +526,7 @@ where
                                     stdout_file_id: None,
                                     stderr_file_id: None,
                                     workdir_file_id: None,
+                                    worker_log_files: Default::default(),
                                     output_artifacts: Vec::new(),
                                     wait_for_licenses,
                                     estimated_walltime,
@@ -1199,6 +1202,7 @@ where
                         stdout_file_id: h.stdout_file_id.clone(),
                         stderr_file_id: h.stderr_file_id.clone(),
                         workdir_file_id: h.workdir_file_id.clone(),
+                        worker_log_files: h.worker_log_files.clone(),
                         output_artifacts: h.output_artifacts.clone(),
                         wait_for_licenses: h.wait_for_licenses,
                         estimated_walltime: h.estimated_walltime,
@@ -1426,43 +1430,43 @@ where
                                 .await
                                 .unwrap_or_default();
                             if let Some(h) = history.into_iter().next() {
-                                let file_id_opt = match log_type {
-                                    LogType::Stdout => h.stdout_file_id.clone(),
-                                    LogType::Stderr => h.stderr_file_id.clone(),
-                                };
-
-                                if let Some(file_id) = file_id_opt {
-                                    match ctx.file_client.download_file_to_bytes(&file_id).await {
-                                        Ok(bytes) => {
-                                            let offset = offset as usize;
-                                            let result_bytes = if offset < bytes.len() {
-                                                if let Some(len) = length {
-                                                    let end = std::cmp::min(
-                                                        offset + len as usize,
-                                                        bytes.len(),
-                                                    );
-                                                    bytes[offset..end].to_vec()
-                                                } else {
-                                                    bytes[offset..].to_vec()
-                                                }
-                                            } else {
-                                                Vec::new()
-                                            };
-                                            Message::LogData {
-                                                request_id,
-                                                job_id,
-                                                content: result_bytes,
-                                            }
-                                        }
-                                        Err(e) => Message::Error(format!(
-                                            "Failed to download log from fileserver: {}",
-                                            e
-                                        )),
-                                    }
-                                } else {
-                                    Message::Error(
+                                match crate::job_logs::resolve_history_log_file_id(
+                                    &h, &log_type, rank,
+                                ) {
+                                    Err(e) => Message::Error(e),
+                                    Ok(None) => Message::Error(
                                         "Logs not available (no file uploaded)".to_string(),
-                                    )
+                                    ),
+                                    Ok(Some(file_id)) => {
+                                        match ctx.file_client.download_file_to_bytes(&file_id).await
+                                        {
+                                            Ok(bytes) => {
+                                                let offset = offset as usize;
+                                                let result_bytes = if offset < bytes.len() {
+                                                    if let Some(len) = length {
+                                                        let end = std::cmp::min(
+                                                            offset + len as usize,
+                                                            bytes.len(),
+                                                        );
+                                                        bytes[offset..end].to_vec()
+                                                    } else {
+                                                        bytes[offset..].to_vec()
+                                                    }
+                                                } else {
+                                                    Vec::new()
+                                                };
+                                                Message::LogData {
+                                                    request_id,
+                                                    job_id,
+                                                    content: result_bytes,
+                                                }
+                                            }
+                                            Err(e) => Message::Error(format!(
+                                                "Failed to download log from fileserver: {}",
+                                                e
+                                            )),
+                                        }
+                                    }
                                 }
                             } else {
                                 Message::Error("Job not found, no worker assigned, or worker offline/disconnected".to_string())

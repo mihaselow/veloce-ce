@@ -221,6 +221,7 @@ pub(super) async fn api_submit_job(
                 stdout_file_id: None,
                 stderr_file_id: None,
                 workdir_file_id: None,
+                worker_log_files: Default::default(),
                 output_artifacts: Vec::new(),
                 wait_for_licenses: payload.wait_for_licenses,
                 estimated_walltime: None,
@@ -313,6 +314,7 @@ pub(super) async fn api_submit_job(
             stdout_file_id: None,
             stderr_file_id: None,
             workdir_file_id: None,
+            worker_log_files: Default::default(),
             output_artifacts: Vec::new(),
             wait_for_licenses: payload.wait_for_licenses,
             estimated_walltime: None,
@@ -487,6 +489,7 @@ pub(super) async fn api_submit_cwl(
                         stdout_file_id: None,
                         stderr_file_id: None,
                         workdir_file_id: None,
+                        worker_log_files: Default::default(),
                         output_artifacts: Vec::new(),
                         wait_for_licenses,
                         estimated_walltime,
@@ -605,6 +608,7 @@ pub(super) async fn api_list_jobs(
             stdout_file_id: h.stdout_file_id.clone(),
             stderr_file_id: h.stderr_file_id.clone(),
             workdir_file_id: h.workdir_file_id.clone(),
+            worker_log_files: h.worker_log_files.clone(),
             output_artifacts: h.output_artifacts.clone(),
             wait_for_licenses: h.wait_for_licenses,
             estimated_walltime: h.estimated_walltime,
@@ -705,6 +709,7 @@ pub(super) async fn api_get_job(
                 stdout_file_id: h.stdout_file_id.clone(),
                 stderr_file_id: h.stderr_file_id.clone(),
                 workdir_file_id: h.workdir_file_id.clone(),
+                worker_log_files: h.worker_log_files.clone(),
                 output_artifacts: h.output_artifacts.clone(),
                 wait_for_licenses: h.wait_for_licenses,
                 estimated_walltime: h.estimated_walltime,
@@ -1417,10 +1422,13 @@ pub(super) async fn api_get_job_logs(
                 _ => LogType::Stdout,
             };
 
-            let file_id_opt = match log_type {
-                LogType::Stdout => h.stdout_file_id.clone(),
-                LogType::Stderr => h.stderr_file_id.clone(),
-            };
+            let file_id_opt =
+                match crate::job_logs::resolve_history_log_file_id(h, &log_type, params.rank) {
+                    Ok(id) => id,
+                    Err(e) => {
+                        return (StatusCode::BAD_REQUEST, e).into_response();
+                    }
+                };
 
             if let Some(file_id) = file_id_opt {
                 match ctx.file_client.download_file_to_bytes(&file_id).await {

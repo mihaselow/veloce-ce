@@ -46,6 +46,8 @@ pub struct JobInfoResponse {
     pub stdout_file_id: Option<String>,
     pub stderr_file_id: Option<String>,
     pub workdir_file_id: Option<String>,
+    #[serde(default)]
+    pub worker_log_files: std::collections::HashMap<String, veloce_common::WorkerLogFiles>,
     pub output_artifacts: Vec<veloce_common::JobOutputArtifact>,
     pub wait_for_licenses: bool,
     pub estimated_walltime: Option<u64>,
@@ -96,6 +98,7 @@ impl From<JobInfo> for JobInfoResponse {
             stdout_file_id: info.stdout_file_id,
             stderr_file_id: info.stderr_file_id,
             workdir_file_id: info.workdir_file_id,
+            worker_log_files: info.worker_log_files,
             output_artifacts: info.output_artifacts,
             wait_for_licenses: info.wait_for_licenses,
             estimated_walltime: info.estimated_walltime,

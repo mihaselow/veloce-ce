@@ -554,6 +554,10 @@ pub async fn handle_worker_message(
                         if let Some(id) = stderr_id {
                             job.stderr_file_id = Some(id);
                         }
+                        if !log_files.is_empty() {
+                            job.worker_log_files =
+                                crate::job_logs::tracking_to_worker_log_files(&log_files);
+                        }
                     }
 
                     let files =
@@ -615,6 +619,19 @@ pub async fn handle_worker_message(
             ctx.missing_jobs.remove(&job_id);
             let (files, job_clone) = {
                 let mut state_lock = ctx.state.lock().await;
+                if let Some(log_files) = state_lock
+                    .multinode_job_tracking
+                    .worker_log_files
+                    .get(&job_id)
+                    .cloned()
+                {
+                    if let Some(job) = state_lock.jobs.get_mut(&job_id) {
+                        if !log_files.is_empty() {
+                            job.worker_log_files =
+                                crate::job_logs::tracking_to_worker_log_files(&log_files);
+                        }
+                    }
+                }
                 let files = finalize_job(&mut state_lock, job_id, JobStatus::Failed(error));
                 let job_clone = state_lock.jobs.get(&job_id).cloned();
                 state_lock.jobs.remove(&job_id);
@@ -977,6 +994,12 @@ pub async fn handle_worker_message(
                     usage.stdout_file_id.clone(),
                     usage.stderr_file_id.clone(),
                 );
+                let tracked_logs = state_lock
+                    .multinode_job_tracking
+                    .worker_log_files
+                    .get(&usage.job_id)
+                    .cloned()
+                    .unwrap_or_default();
                 let multinode = state_lock
                     .jobs
                     .get(&usage.job_id)
@@ -996,6 +1019,10 @@ pub async fn handle_worker_message(
                     }
                     job.workdir_file_id = usage.workdir_file_id.clone();
                     job.output_artifacts = usage.output_artifacts.clone();
+                    if !tracked_logs.is_empty() {
+                        job.worker_log_files =
+                            crate::job_logs::tracking_to_worker_log_files(&tracked_logs);
+                    }
                     merge_usage_report_with_job(usage, job)
                 } else {
                     usage

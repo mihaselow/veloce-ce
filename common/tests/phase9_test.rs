@@ -40,6 +40,7 @@ fn test_job_info_serialization_with_reason() {
         stdout_file_id: None,
         stderr_file_id: None,
         workdir_file_id: None,
+        worker_log_files: Default::default(),
         output_artifacts: Vec::new(),
         wait_for_licenses: false,
         estimated_walltime: None,

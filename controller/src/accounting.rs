@@ -145,6 +145,7 @@ impl SqlxAccountingStore {
                     stdout_file_id TEXT,
                     stderr_file_id TEXT,
                     workdir_file_id TEXT,
+                    worker_log_files TEXT NOT NULL DEFAULT '{}',
                     output_artifacts TEXT NOT NULL DEFAULT '[]',
                     wait_for_licenses BOOLEAN NOT NULL,
                     estimated_walltime INTEGER,
@@ -178,6 +179,11 @@ impl SqlxAccountingStore {
             let _ = sqlx::query("ALTER TABLE veloce_accounting ADD COLUMN output_artifacts TEXT NOT NULL DEFAULT '[]';")
                 .execute(&pool)
                 .await;
+            let _ = sqlx::query(
+                "ALTER TABLE veloce_accounting ADD COLUMN worker_log_files TEXT NOT NULL DEFAULT '{}';",
+            )
+            .execute(&pool)
+            .await;
 
             // Create indexes
             let _ =
@@ -228,6 +234,7 @@ impl SqlxAccountingStore {
                     stdout_file_id VARCHAR(255),
                     stderr_file_id VARCHAR(255),
                     workdir_file_id VARCHAR(255),
+                    worker_log_files TEXT NOT NULL DEFAULT '{}',
                     output_artifacts TEXT NOT NULL DEFAULT '[]',
                     wait_for_licenses BOOLEAN NOT NULL,
                     estimated_walltime BIGINT,
@@ -265,6 +272,11 @@ impl SqlxAccountingStore {
             let _ = sqlx::query("ALTER TABLE veloce_accounting ADD COLUMN IF NOT EXISTS output_artifacts TEXT NOT NULL DEFAULT '[]';")
                 .execute(&pool)
                 .await;
+            let _ = sqlx::query(
+                "ALTER TABLE veloce_accounting ADD COLUMN IF NOT EXISTS worker_log_files TEXT NOT NULL DEFAULT '{}';",
+            )
+            .execute(&pool)
+            .await;
 
             // Create indexes
             let _ =
@@ -367,6 +379,9 @@ fn map_sqlite_row(row: &sqlx::sqlite::SqliteRow) -> Result<JobUsage> {
     let stdout_file_id: Option<String> = row.try_get("stdout_file_id")?;
     let stderr_file_id: Option<String> = row.try_get("stderr_file_id")?;
     let workdir_file_id: Option<String> = row.try_get("workdir_file_id")?;
+    let worker_log_files_str: String = row
+        .try_get("worker_log_files")
+        .unwrap_or_else(|_| "{}".to_string());
     let output_artifacts_str: String = row
         .try_get("output_artifacts")
         .unwrap_or_else(|_| "[]".to_string());
@@ -388,6 +403,7 @@ fn map_sqlite_row(row: &sqlx::sqlite::SqliteRow) -> Result<JobUsage> {
     let dependency_specs: Option<Vec<String>> =
         dependency_specs_str.and_then(|s| serde_json::from_str(&s).ok());
     let output_artifacts = serde_json::from_str(&output_artifacts_str).unwrap_or_default();
+    let worker_log_files = serde_json::from_str(&worker_log_files_str).unwrap_or_default();
 
     let status = parse_job_status(&status_str, exit_code);
 
@@ -417,6 +433,7 @@ fn map_sqlite_row(row: &sqlx::sqlite::SqliteRow) -> Result<JobUsage> {
         stdout_file_id,
         stderr_file_id,
         workdir_file_id,
+        worker_log_files,
         output_artifacts,
         wait_for_licenses,
         estimated_walltime: estimated_walltime.map(|t| t as u64),
@@ -455,6 +472,9 @@ fn map_postgres_row(row: &sqlx::postgres::PgRow) -> Result<JobUsage> {
     let stdout_file_id: Option<String> = row.try_get("stdout_file_id")?;
     let stderr_file_id: Option<String> = row.try_get("stderr_file_id")?;
     let workdir_file_id: Option<String> = row.try_get("workdir_file_id")?;
+    let worker_log_files_str: String = row
+        .try_get("worker_log_files")
+        .unwrap_or_else(|_| "{}".to_string());
     let output_artifacts_str: String = row
         .try_get("output_artifacts")
         .unwrap_or_else(|_| "[]".to_string());
@@ -476,6 +496,7 @@ fn map_postgres_row(row: &sqlx::postgres::PgRow) -> Result<JobUsage> {
     let dependency_specs: Option<Vec<String>> =
         dependency_specs_str.and_then(|s| serde_json::from_str(&s).ok());
     let output_artifacts = serde_json::from_str(&output_artifacts_str).unwrap_or_default();
+    let worker_log_files = serde_json::from_str(&worker_log_files_str).unwrap_or_default();
 
     let status = parse_job_status(&status_str, exit_code);
 
@@ -505,6 +526,7 @@ fn map_postgres_row(row: &sqlx::postgres::PgRow) -> Result<JobUsage> {
         stdout_file_id,
         stderr_file_id,
         workdir_file_id,
+        worker_log_files,
         output_artifacts,
         wait_for_licenses,
         estimated_walltime: estimated_walltime.map(|t| t as u64),
@@ -539,6 +561,7 @@ impl AccountingStore for SqlxAccountingStore {
             .as_ref()
             .map(|d| serde_json::to_string(d).unwrap());
         let output_artifacts = serde_json::to_string(&record.output_artifacts)?;
+        let worker_log_files = serde_json::to_string(&record.worker_log_files)?;
 
         let at_rest = job_secrets::global_cipher().encode_for_storage(&record.secret);
 
@@ -569,8 +592,8 @@ impl AccountingStore for SqlxAccountingStore {
                         job_id, job_name, job_comment, command_line, user_id, submission_time, start_time, end_time, exit_code, status,
                         cpu_time_ms, max_memory_bytes, req_nodes, req_cores, req_memory, array_id, array_task_id,
                         assigned_workers, gres_req, cgroup_active, secret, secret_enc, stdout_file_id, stderr_file_id,
-                        workdir_file_id, output_artifacts, wait_for_licenses, estimated_walltime, priority_offset, dependencies, dependency_specs, qos
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
+                        workdir_file_id, worker_log_files, output_artifacts, wait_for_licenses, estimated_walltime, priority_offset, dependencies, dependency_specs, qos
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
                     ON CONFLICT (job_id) DO UPDATE SET
                         job_name = EXCLUDED.job_name,
                         job_comment = EXCLUDED.job_comment,
@@ -596,6 +619,7 @@ impl AccountingStore for SqlxAccountingStore {
                         stdout_file_id = EXCLUDED.stdout_file_id,
                         stderr_file_id = EXCLUDED.stderr_file_id,
                         workdir_file_id = EXCLUDED.workdir_file_id,
+                        worker_log_files = EXCLUDED.worker_log_files,
                         output_artifacts = EXCLUDED.output_artifacts,
                         wait_for_licenses = EXCLUDED.wait_for_licenses,
                         estimated_walltime = EXCLUDED.estimated_walltime,
@@ -629,6 +653,7 @@ impl AccountingStore for SqlxAccountingStore {
                 .bind(&record.stdout_file_id)
                 .bind(&record.stderr_file_id)
                 .bind(&record.workdir_file_id)
+                .bind(&worker_log_files)
                 .bind(&output_artifacts)
                 .bind(record.wait_for_licenses)
                 .bind(estimated_walltime_i64)
@@ -645,8 +670,8 @@ impl AccountingStore for SqlxAccountingStore {
                         job_id, job_name, job_comment, command_line, user_id, submission_time, start_time, end_time, exit_code, status,
                         cpu_time_ms, max_memory_bytes, req_nodes, req_cores, req_memory, array_id, array_task_id,
                         assigned_workers, gres_req, cgroup_active, secret, secret_enc, stdout_file_id, stderr_file_id,
-                        workdir_file_id, output_artifacts, wait_for_licenses, estimated_walltime, priority_offset, dependencies, dependency_specs, qos
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
+                        workdir_file_id, worker_log_files, output_artifacts, wait_for_licenses, estimated_walltime, priority_offset, dependencies, dependency_specs, qos
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
                     ON CONFLICT (job_id) DO UPDATE SET
                         job_name = EXCLUDED.job_name,
                         job_comment = EXCLUDED.job_comment,
@@ -672,6 +697,7 @@ impl AccountingStore for SqlxAccountingStore {
                         stdout_file_id = EXCLUDED.stdout_file_id,
                         stderr_file_id = EXCLUDED.stderr_file_id,
                         workdir_file_id = EXCLUDED.workdir_file_id,
+                        worker_log_files = EXCLUDED.worker_log_files,
                         output_artifacts = EXCLUDED.output_artifacts,
                         wait_for_licenses = EXCLUDED.wait_for_licenses,
                         estimated_walltime = EXCLUDED.estimated_walltime,
@@ -705,6 +731,7 @@ impl AccountingStore for SqlxAccountingStore {
                 .bind(&record.stdout_file_id)
                 .bind(&record.stderr_file_id)
                 .bind(&record.workdir_file_id)
+                .bind(&worker_log_files)
                 .bind(&output_artifacts)
                 .bind(record.wait_for_licenses)
                 .bind(estimated_walltime_i64)
@@ -895,6 +922,7 @@ mod tests {
             stdout_file_id: None,
             stderr_file_id: None,
             workdir_file_id: None,
+            worker_log_files: Default::default(),
             output_artifacts: Vec::new(),
             wait_for_licenses: false,
             estimated_walltime: None,

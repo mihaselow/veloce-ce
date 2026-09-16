@@ -38,6 +38,7 @@ pub fn job_to_usage(job: &JobInfo) -> veloce_common::JobUsage {
         stdout_file_id: job.stdout_file_id.clone(),
         stderr_file_id: job.stderr_file_id.clone(),
         workdir_file_id: job.workdir_file_id.clone(),
+        worker_log_files: job.worker_log_files.clone(),
         output_artifacts: job.output_artifacts.clone(),
         wait_for_licenses: job.wait_for_licenses,
         estimated_walltime: job.estimated_walltime,
@@ -72,6 +73,11 @@ pub(crate) fn merge_usage_report_with_job(
         .workdir_file_id
         .take()
         .or_else(|| job.workdir_file_id.clone());
+    if !usage.worker_log_files.is_empty() {
+        merged.worker_log_files = usage.worker_log_files;
+    } else if !job.worker_log_files.is_empty() {
+        merged.worker_log_files = job.worker_log_files.clone();
+    }
     if !usage.output_artifacts.is_empty() {
         merged.output_artifacts = usage.output_artifacts;
     }
