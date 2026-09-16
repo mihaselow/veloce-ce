@@ -42,6 +42,26 @@ pub fn tracking_to_worker_log_files(
         .collect()
 }
 
+/// Union per-worker log ids so a partial accounting UPSERT cannot drop peers.
+pub fn merge_worker_log_file_maps(
+    mut base: HashMap<String, WorkerLogFiles>,
+    extra: HashMap<String, WorkerLogFiles>,
+) -> HashMap<String, WorkerLogFiles> {
+    for (worker_id, files) in extra {
+        base.entry(worker_id)
+            .and_modify(|existing| {
+                if files.stdout_file_id.is_some() {
+                    existing.stdout_file_id = files.stdout_file_id.clone();
+                }
+                if files.stderr_file_id.is_some() {
+                    existing.stderr_file_id = files.stderr_file_id.clone();
+                }
+            })
+            .or_insert(files);
+    }
+    base
+}
+
 pub fn expected_done_workers(tracking: &MultinodeJobTracking, job_id: u64, job: &JobInfo) -> usize {
     tracking
         .dispatched_workers
@@ -325,5 +345,29 @@ mod tests {
     fn history_invalid_rank_errors() {
         let usage = sample_usage();
         assert!(resolve_history_log_file_id(&usage, &LogType::Stdout, Some(9)).is_err());
+    }
+
+    #[test]
+    fn merge_worker_log_file_maps_unions_workers() {
+        let mut a = HashMap::new();
+        a.insert(
+            "w0".into(),
+            WorkerLogFiles {
+                stdout_file_id: Some("out0".into()),
+                stderr_file_id: Some("err0".into()),
+            },
+        );
+        let mut b = HashMap::new();
+        b.insert(
+            "w1".into(),
+            WorkerLogFiles {
+                stdout_file_id: Some("out1".into()),
+                stderr_file_id: None,
+            },
+        );
+        let merged = merge_worker_log_file_maps(a, b);
+        assert_eq!(merged.len(), 2);
+        assert_eq!(merged["w0"].stdout_file_id.as_deref(), Some("out0"));
+        assert_eq!(merged["w1"].stdout_file_id.as_deref(), Some("out1"));
     }
 }

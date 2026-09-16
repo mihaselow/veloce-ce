@@ -561,7 +561,21 @@ impl AccountingStore for SqlxAccountingStore {
             .as_ref()
             .map(|d| serde_json::to_string(d).unwrap());
         let output_artifacts = serde_json::to_string(&record.output_artifacts)?;
-        let worker_log_files = serde_json::to_string(&record.worker_log_files)?;
+        // Merge with any existing per-worker map so concurrent ReportJobUsage /
+        // finalize UPSERTs cannot drop ranks (veloce-ce#4).
+        let mut worker_log_files_map = record.worker_log_files.clone();
+        if let Ok(existing) = self
+            .query_history(&HistoryFilter::Single(record.job_id))
+            .await
+        {
+            if let Some(prev) = existing.into_iter().next() {
+                worker_log_files_map = crate::job_logs::merge_worker_log_file_maps(
+                    prev.worker_log_files,
+                    worker_log_files_map,
+                );
+            }
+        }
+        let worker_log_files = serde_json::to_string(&worker_log_files_map)?;
 
         let at_rest = job_secrets::global_cipher().encode_for_storage(&record.secret);
 

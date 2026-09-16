@@ -547,6 +547,19 @@ pub async fn handle_worker_message(
                         }
                     }
 
+                    let fresh_logs = state_lock
+                        .multinode_job_tracking
+                        .worker_log_files
+                        .get(&job_id)
+                        .cloned()
+                        .filter(|m| !m.is_empty())
+                        .or_else(|| {
+                            if log_files.is_empty() {
+                                None
+                            } else {
+                                Some(log_files.clone())
+                            }
+                        });
                     if let Some(job) = state_lock.jobs.get_mut(&job_id) {
                         if let Some(id) = stdout_id {
                             job.stdout_file_id = Some(id);
@@ -554,9 +567,10 @@ pub async fn handle_worker_message(
                         if let Some(id) = stderr_id {
                             job.stderr_file_id = Some(id);
                         }
-                        if !log_files.is_empty() {
+                        // Prefer live tracking — peers may have reported during merge await.
+                        if let Some(fresh) = fresh_logs {
                             job.worker_log_files =
-                                crate::job_logs::tracking_to_worker_log_files(&log_files);
+                                crate::job_logs::tracking_to_worker_log_files(&fresh);
                         }
                     }
 
@@ -1023,8 +1037,18 @@ pub async fn handle_worker_message(
                         job.worker_log_files =
                             crate::job_logs::tracking_to_worker_log_files(&tracked_logs);
                     }
-                    merge_usage_report_with_job(usage, job)
+                    let mut merged = merge_usage_report_with_job(usage, job);
+                    if !tracked_logs.is_empty() {
+                        merged.worker_log_files =
+                            crate::job_logs::tracking_to_worker_log_files(&tracked_logs);
+                    }
+                    merged
                 } else {
+                    let mut usage = usage;
+                    if !tracked_logs.is_empty() {
+                        usage.worker_log_files =
+                            crate::job_logs::tracking_to_worker_log_files(&tracked_logs);
+                    }
                     usage
                 }
             };
