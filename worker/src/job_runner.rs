@@ -1003,6 +1003,7 @@ pub(crate) async fn run_job(
                 stdout_file_id,
                 stderr_file_id,
                 workdir_file_id,
+                worker_log_files: Default::default(),
                 output_artifacts,
                 wait_for_licenses: entry.wait_for_licenses,
                 estimated_walltime: entry.estimated_walltime,
