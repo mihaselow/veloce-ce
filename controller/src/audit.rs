@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use sqlx::{Any, Pool, Row};
+use sqlx::{Any, AssertSqlSafe, Pool, Row};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -123,18 +123,19 @@ impl AuditLog {
         query.push_str(" ORDER BY ts DESC LIMIT ");
         query.push_str(&limit.to_string());
 
+        let sql = AssertSqlSafe(query);
         let rows = if let (Some(et), Some(pr)) = (event_type, principal) {
-            sqlx::query(&query)
+            sqlx::query(sql)
                 .bind(et)
                 .bind(pr)
                 .fetch_all(&self.pool)
                 .await?
         } else if let Some(et) = event_type {
-            sqlx::query(&query).bind(et).fetch_all(&self.pool).await?
+            sqlx::query(sql).bind(et).fetch_all(&self.pool).await?
         } else if let Some(pr) = principal {
-            sqlx::query(&query).bind(pr).fetch_all(&self.pool).await?
+            sqlx::query(sql).bind(pr).fetch_all(&self.pool).await?
         } else {
-            sqlx::query(&query).fetch_all(&self.pool).await?
+            sqlx::query(sql).fetch_all(&self.pool).await?
         };
 
         let mut events = Vec::with_capacity(rows.len());

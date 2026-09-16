@@ -1,3 +1,0 @@
-[advisories]
-# Marvin attack on rsa 0.9: no patched 0.9.x exists; pulled in by jsonwebtoken.
-ignore = ["RUSTSEC-2023-0071"]

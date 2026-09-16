@@ -11,4 +11,4 @@ members = [
 resolver = "2"
 
 [workspace.package]
-rust-version = "1.90"
+rust-version = "1.94"

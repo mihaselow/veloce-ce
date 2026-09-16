@@ -722,15 +722,15 @@ impl AccountingStore for SqlxAccountingStore {
     async fn query_history(&self, filter: &HistoryFilter) -> Result<Vec<JobUsage>> {
         let (sql, bind_id, bind_start, bind_end) = match filter {
             HistoryFilter::All => (
-                "SELECT * FROM veloce_accounting ORDER BY job_id ASC".to_string(),
+                "SELECT * FROM veloce_accounting ORDER BY job_id ASC",
                 None, None, None
             ),
             HistoryFilter::Single(id) => (
-                "SELECT * FROM veloce_accounting WHERE job_id = $1".to_string(),
+                "SELECT * FROM veloce_accounting WHERE job_id = $1",
                 Some(*id as i64), None, None
             ),
             HistoryFilter::Range(start, end) => (
-                "SELECT * FROM veloce_accounting WHERE job_id >= $1 AND job_id <= $2 ORDER BY job_id ASC".to_string(),
+                "SELECT * FROM veloce_accounting WHERE job_id >= $1 AND job_id <= $2 ORDER BY job_id ASC",
                 None, Some(*start as i64), Some(*end as i64)
             ),
         };
@@ -738,7 +738,7 @@ impl AccountingStore for SqlxAccountingStore {
         let mut results = Vec::new();
         match &self.pool {
             DbPool::Sqlite(pool) => {
-                let mut query = sqlx::query(&sql);
+                let mut query = sqlx::query(sql);
                 if let Some(id) = bind_id {
                     query = query.bind(id);
                 } else if let Some(start) = bind_start {
@@ -752,7 +752,7 @@ impl AccountingStore for SqlxAccountingStore {
                 }
             }
             DbPool::Postgres(pool) => {
-                let mut query = sqlx::query(&sql);
+                let mut query = sqlx::query(sql);
                 if let Some(id) = bind_id {
                     query = query.bind(id);
                 } else if let Some(start) = bind_start {
