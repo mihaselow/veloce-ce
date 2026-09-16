@@ -8,6 +8,7 @@ build_log.txt
 /certs/
 
 # Controller runtime and integration-test leftovers
+/data/
 *.bin
 veloce-controller.log
 controller_test_run*.log
