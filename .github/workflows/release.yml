@@ -67,9 +67,10 @@ jobs:
             nfpm package -f "packaging/nfpm/${p}.yaml" -p deb -t dist/
             nfpm package -f "packaging/nfpm/${p}.yaml" -p rpm -t dist/
           done
-          (cd dist && sha256sum * > SHA256SUMS)
+          (cd dist && sha256sum -- * > SHA256SUMS)
           ./packaging/scripts/smoke-debs.sh dist
-          sha256sum -c dist/SHA256SUMS
+          # Checksums use bare names written inside dist/; verify from there.
+          (cd dist && sha256sum -c SHA256SUMS)
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
