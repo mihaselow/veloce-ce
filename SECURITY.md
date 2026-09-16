@@ -6,7 +6,7 @@ Report vulnerabilities privately. Do not open a public GitHub issue for a securi
 
 Use [GitHub private vulnerability reporting](https://github.com/mihaselow/veloce-ce/security/advisories/new) on this repository.
 
-If that form is unavailable, email the Licensor listed in [LICENSE](LICENSE).
+If that form is unavailable, email [hello@veloce-hpc.io](mailto:hello@veloce-hpc.io).
 
 Include:
 

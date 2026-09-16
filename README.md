@@ -82,6 +82,6 @@ Business Source License 1.1 — see [LICENSE](LICENSE).
 - You may **not** use this work as a competing hosted or commercially redistributed HPC/SimOps control plane.
 - On **2030-09-15**, or four years after the first public distribution of a given version (whichever is first), that version converts to **Apache License 2.0**.
 
-Security reports: [SECURITY.md](SECURITY.md).
+Security reports: [SECURITY.md](SECURITY.md). Commercial or alternative licensing: [hello@veloce-hpc.io](mailto:hello@veloce-hpc.io).
 
 “Veloce” is a trademark of the Licensor. This license does not grant trademark rights.
