@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Pool, Postgres, Sqlite};
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::sync::{Arc, Mutex as StdMutex};
@@ -50,7 +50,10 @@ impl AccountingStore for FileAccountingStore {
 
     async fn query_history(&self, filter: &HistoryFilter) -> Result<Vec<JobUsage>> {
         let _lock = ACCOUNTING_LOCK.lock().unwrap();
-        let mut results = Vec::new();
+        // File store appends every ReportJobUsage/finalize write. Collapse to the
+        // latest row per job_id while unioning worker_log_files so early partial
+        // reports cannot hide later ranks (veloce-ce#4).
+        let mut by_job: HashMap<u64, JobUsage> = HashMap::new();
         if let Ok(mut file) = File::open(ACCOUNTING_FILE) {
             loop {
                 let mut len_bytes = [0u8; 8];
@@ -76,12 +79,22 @@ impl AccountingStore for FileAccountingStore {
                         }
                     };
                     if include {
-                        results.push(usage);
+                        by_job
+                            .entry(usage.job_id)
+                            .and_modify(|prev| {
+                                let logs = crate::job_logs::merge_worker_log_file_maps(
+                                    std::mem::take(&mut prev.worker_log_files),
+                                    usage.worker_log_files.clone(),
+                                );
+                                *prev = usage.clone();
+                                prev.worker_log_files = logs;
+                            })
+                            .or_insert(usage);
                     }
                 }
             }
         }
-        Ok(results)
+        Ok(by_job.into_values().collect())
     }
 }
 
