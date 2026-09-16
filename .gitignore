@@ -2,6 +2,7 @@
 /build/
 /dist/
 /docs/specs/
+/docker-lab/
 **/*.rs.bk
 .DS_Store
 build_log.txt
