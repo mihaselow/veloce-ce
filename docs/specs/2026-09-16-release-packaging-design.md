@@ -31,7 +31,7 @@ Single GitHub Actions job on `ubuntu-latest` (`.github/workflows/release.yml`):
 6. Install `nfpm`; package each of the four packages to `.deb` and `.rpm`.
 7. Build one `.tar.gz` per package with the same file layout as the packages.
 8. Emit `SHA256SUMS` for all artifacts.
-9. Smoke: `sha256sum -c SHA256SUMS`; for each `.deb`, `dpkg-deb -I` / `dpkg-deb -c` and assert binary + unit paths (CLI has no unit).
+9. Smoke: `sha256sum -c SHA256SUMS`; for each `.deb`, `dpkg-deb -I` / `dpkg-deb -c` and assert binary + unit paths (CLI has no unit; assert both `veloce` and `veloce-exec`).
 10. Upload: tag → GitHub Release assets; dispatch dry-run → workflow artifacts only.
 
 ## Package layout
@@ -43,7 +43,7 @@ Install prefix uses FHS paths suitable for distro packages:
 | `veloce-controller` | `/usr/bin/veloce-controller` | `/etc/veloce/veloce.toml.example` | `/lib/systemd/system/veloce-controller.service` |
 | `veloce-worker` | `/usr/bin/veloce-worker` | `/etc/veloce/veloce-worker.toml.example` | `/lib/systemd/system/veloce-worker.service` |
 | `veloce-fileserver` | `/usr/bin/veloce-fileserver` | `/etc/veloce/veloce-fileserver.toml.example` | `/lib/systemd/system/veloce-fileserver.service` |
-| `veloce-cli` | `/usr/bin/veloce` | `/etc/veloce/cli-config.toml.example` | none |
+| `veloce-cli` | `/usr/bin/veloce` and `/usr/bin/veloce-exec` | `/etc/veloce/cli-config.toml.example` | none |
 
 - Sample TOMLs come from `examples/` at pack time (renamed to `*.example`).
 - systemd units are CE-owned templates under `packaging/systemd/`; packages must **not** enable or start services in postinst. Docs show `systemctl enable --now …`.
