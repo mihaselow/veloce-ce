@@ -11,6 +11,7 @@ Guides that apply to this repository. Per-crate flags and internals live next to
 | [cli-json.md](cli-json.md) | `veloce --json` stdout contract |
 | [rest.md](rest.md) | Controller HTTPS routes in this tree |
 | [specs/2026-09-16-release-packaging-design.md](specs/2026-09-16-release-packaging-design.md) | Design: tag-triggered amd64 deb/rpm/tar.gz release pipeline |
+| [plans/2026-09-16-release-packaging.md](plans/2026-09-16-release-packaging.md) | Implementation plan for the release packaging pipeline |
 
 | Crate README | Binary / library |
 |--------------|------------------|
