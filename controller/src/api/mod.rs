@@ -445,9 +445,9 @@ mod tests {
 
         // 1. Issue token
         let payload = IssueComponentTokenRequest {
-            component_id: "test-mcp-client".to_string(),
+            component_id: "test-cli-client".to_string(),
             component_type: "client".to_string(),
-            roles: vec!["mcp".to_string()],
+            roles: vec!["cli".to_string()],
         };
 
         let response = api_issue_component_token(State(ctx.clone()), ext.clone(), Json(payload))
@@ -460,7 +460,7 @@ mod tests {
             .await
             .unwrap();
         let issue_resp: IssueComponentTokenResponse = serde_json::from_slice(&body_bytes).unwrap();
-        assert_eq!(issue_resp.component_id, "test-mcp-client");
+        assert_eq!(issue_resp.component_id, "test-cli-client");
         assert!(issue_resp.token.starts_with("veloce_tok_"));
 
         // 2. List components
@@ -474,7 +474,7 @@ mod tests {
         let list: Vec<veloce_common::auth::RegisteredComponent> =
             serde_json::from_slice(&body_bytes).unwrap();
         assert_eq!(list.len(), 1);
-        assert_eq!(list[0].component_id, "test-mcp-client");
+        assert_eq!(list[0].component_id, "test-cli-client");
         assert_eq!(list[0].component_type, ComponentType::Client);
         assert!(!list[0].revoked);
 
@@ -482,7 +482,7 @@ mod tests {
         let response = api_rotate_component_token(
             State(ctx.clone()),
             ext.clone(),
-            Path("test-mcp-client".to_string()),
+            Path("test-cli-client".to_string()),
         )
         .await
         .into_response();
@@ -491,14 +491,14 @@ mod tests {
             .await
             .unwrap();
         let rotate_resp: IssueComponentTokenResponse = serde_json::from_slice(&body_bytes).unwrap();
-        assert_eq!(rotate_resp.component_id, "test-mcp-client");
+        assert_eq!(rotate_resp.component_id, "test-cli-client");
         assert_ne!(rotate_resp.token, issue_resp.token);
 
         // 4. Revoke component
         let response = api_revoke_component(
             State(ctx.clone()),
             ext.clone(),
-            Path("test-mcp-client".to_string()),
+            Path("test-cli-client".to_string()),
         )
         .await
         .into_response();

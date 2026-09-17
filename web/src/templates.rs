@@ -31,7 +31,7 @@ pub(crate) fn template_cards(containers: Vec<ContainerAsset>) -> Vec<TemplateCar
     grouped
         .into_iter()
         .filter_map(|(name, mut group)| {
-            group.sort_by(|a, b| template_version(a).cmp(&template_version(b)));
+            group.sort_by_key(template_version);
             let versions = group.iter().map(template_version).fold(
                 Vec::<String>::new(),
                 |mut versions, version| {

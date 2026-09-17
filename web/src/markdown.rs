@@ -3,6 +3,7 @@
 use pulldown_cmark::{html, Event, Options, Parser};
 
 /// Convert Markdown to HTML. Raw HTML in the source is treated as text (escaped).
+#[allow(dead_code)] // retained for chat/agent UI; not wired in the CE dashboard yet
 pub fn markdown_to_html(markdown: &str) -> String {
     let mut options = Options::empty();
     options.insert(Options::ENABLE_STRIKETHROUGH);

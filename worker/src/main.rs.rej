@@ -1,4 +1,0 @@
-@@ -936,2 +936,3 @@
-                         dependency_specs.clone(),
-                         qos,
-+                        container_asset,

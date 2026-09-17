@@ -4,15 +4,22 @@
 /docs/specs/
 /docker-lab/
 **/*.rs.bk
+**/*.rs.rej
+*.rej
 .DS_Store
 build_log.txt
+web/build_err.txt
 /certs/
+
+# Prebuilt dashboard output (build with trunk; do not commit)
+/web/dist/
 
 # Controller runtime and integration-test leftovers
 /data/
 *.bin
+*.log
 veloce-controller.log
+controller/veloce-controller.log
 controller_test_run*.log
 controller_*test_run*.log
 controller_test_run_exit.log
-

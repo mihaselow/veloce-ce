@@ -90,7 +90,7 @@ Slurm is a proven batch manager with partitions, slurmd, accounting daemons, and
 
 ## Status
 
-**1.0.0-beta.3** — lab-buildable Community Edition. CI runs fmt, clippy, tests, a locked build, and a WASM check. Report vulnerabilities via [SECURITY.md](SECURITY.md).
+**1.0.0-beta.3** — lab-buildable Community Edition. CI runs fmt, clippy, tests, a locked build, and a WASM check. How to contribute: [CONTRIBUTING.md](CONTRIBUTING.md). Report vulnerabilities via [SECURITY.md](SECURITY.md).
 
 ## License
 

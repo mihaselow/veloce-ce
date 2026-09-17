@@ -379,13 +379,13 @@ mod tests {
             "invalid_or_revoked_token",
             "bad-client",
         );
-        let e3 = AuditEvent::component_token_action("issued", "mcp-ha-1", "admin@veloce.local");
+        let e3 = AuditEvent::component_token_action("issued", "cli-ha-1", "admin@veloce.local");
         let e4 = AuditEvent::auth_login(true, "alice@company.com", "oidc");
         let e5 = AuditEvent::auth_denied("bob@company.com", "oidc", "insufficient_role");
         let e6 = AuditEvent::job_mutation("submit", 123, "alice@company.com");
         let e7 = AuditEvent::noise_rpc_denied(
-            "mcp-ha-1",
-            Some("mcp-ha-1"),
+            "cli-ha-1",
+            Some("cli-ha-1"),
             "SubmitJob",
             "forbidden_by_rbac",
         );

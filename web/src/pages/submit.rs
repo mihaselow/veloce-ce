@@ -1,9 +1,6 @@
 use crate::api_client::api_post;
 use crate::app::WebConfig;
 use crate::login::{get_session_storage_item, has_admin_operator_privileges};
-use crate::pages::kepler_examples::{
-    fetch_kepler_example_text, fetch_kepler_examples, file_from_string,
-};
 use crate::templates::{template_cards, template_group_name, template_version};
 use gloo_net::http::Request;
 use leptos::*;
@@ -53,25 +50,8 @@ pub(crate) fn SubmitJob() -> impl IntoView {
 
     // Template Specific Fields
     let (template_file, set_template_file) = create_signal("".to_string());
-    let (kepler_example, set_kepler_example) = create_signal("none".to_string());
 
     let navigate = use_navigate();
-
-    let is_kepler_template = move || {
-        let tmpl = selected_template.get();
-        tmpl.contains("Kepler multiphysics") || tmpl.starts_with("Kepler ")
-    };
-
-    let kepler_examples = create_resource(
-        move || is_kepler_template(),
-        |enabled| async move {
-            if enabled {
-                fetch_kepler_examples().await
-            } else {
-                Vec::new()
-            }
-        },
-    );
 
     create_effect(move |_| {
         let cards = visible_template_cards.get();
@@ -112,7 +92,6 @@ pub(crate) fn SubmitJob() -> impl IntoView {
         // Reset template-specific fields when switching cards
         set_template_file.set("".to_string());
         set_selected_file.set(None);
-        set_kepler_example.set("none".to_string());
 
         if tmpl_name == "General" {
             set_binary.set("".to_string());
@@ -164,31 +143,6 @@ pub(crate) fn SubmitJob() -> impl IntoView {
             }
         }
         (tmpl_name, version_name)
-    });
-
-    create_effect(move |_| {
-        if !is_kepler_template() {
-            return;
-        }
-        let example_id = kepler_example.get();
-        if example_id == "none" {
-            return;
-        }
-        let Some(examples) = kepler_examples.get() else {
-            return;
-        };
-        let Some(entry) = examples.iter().find(|item| item.id == example_id) else {
-            return;
-        };
-        let path = entry.path.clone();
-        let filename = entry.filename.clone();
-        set_template_file.set(filename.clone());
-        set_selected_file.set(None);
-        spawn_local(async move {
-            if let Some(text) = fetch_kepler_example_text(&path).await {
-                set_selected_file.set(Some(file_from_string(&filename, &text)));
-            }
-        });
     });
 
     create_effect(move |_| {
@@ -363,7 +317,7 @@ pub(crate) fn SubmitJob() -> impl IntoView {
                                     || filename.ends_with(".zip");
 
                                 if is_container_job {
-                                    // Container images (e.g. Kepler SIF) may not include curl.
+                                    // Container images may not include curl.
                                     // Stage inputs on the worker before apptainer exec instead.
                                     job_inputs.push(serde_json::json!({
                                         "file_id": file_id,
@@ -646,51 +600,6 @@ exit $EXIT_CODE
                             }}
                         </select>
                     </div>
-                    <Show when=is_kepler_template fallback=|| ().into_view()>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label>"Kepler Example"</label>
-                            <select
-                                prop:value=kepler_example
-                                on:change=move |ev| {
-                                    let v = event_target_value(&ev);
-                                    if v == "none" {
-                                        set_kepler_example.set("none".to_string());
-                                        set_selected_file.set(None);
-                                        set_template_file.set("".to_string());
-                                    } else {
-                                        set_kepler_example.set(v);
-                                    }
-                                }
-                            >
-                                <option value="none">"None"</option>
-                                {move || {
-                                    match kepler_examples.get() {
-                                        None => view! {
-                                            <option value="" disabled=true>"Loading Kepler examples…"</option>
-                                        }.into_view(),
-                                        Some(examples) if examples.is_empty() => view! {
-                                            <option value="" disabled=true>
-                                                "No examples found (is the Kepler overlay running?)"
-                                            </option>
-                                        }.into_view(),
-                                        Some(examples) => examples
-                                            .into_iter()
-                                            .map(|example| {
-                                                let id = example.id.clone();
-                                                let label = example.label.clone();
-                                                view! {
-                                                    <option value=id.clone()>{label}</option>
-                                                }
-                                            })
-                                            .collect_view(),
-                                    }
-                                }}
-                            </select>
-                            <div style="margin-top: 6px; font-size: 0.8rem; color: var(--muted);">
-                                "Examples are served from /kepler/examples/ (Kepler web container)."
-                            </div>
-                        </div>
-                    </Show>
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>"Target Case / Input File"</label>
                         <input type="text" on:input=move |ev| set_template_file.set(event_target_value(&ev)) prop:value=template_file/>

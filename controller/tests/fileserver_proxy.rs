@@ -348,30 +348,48 @@ async fn test_fileserver_proxy_integration() {
 async fn test_sqlx_connect() {
     sqlx::any::install_default_drivers();
 
+    let abs_db = std::env::temp_dir().join("rbac_test_format3.db");
+    let abs_url = format!("sqlite://{}", abs_db.display());
+    let abs_filename = abs_db.to_string_lossy().into_owned();
+
     let formats = vec![
-        ("sqlite:rbac_test_format1.db", "rbac_test_format1.db"),
-        ("sqlite://rbac_test_format2.db", "rbac_test_format2.db"),
         (
-            "sqlite:///Users/michaelhaselow/_devel/veloce/rbac_test_format3.db",
-            "rbac_test_format3.db",
+            "sqlite:rbac_test_format1.db".to_string(),
+            "rbac_test_format1.db".to_string(),
         ),
-        ("sqlite:./rbac_test_format4.db", "rbac_test_format4.db"),
-        ("sqlite://./rbac_test_format5.db", "rbac_test_format5.db"),
+        (
+            "sqlite://rbac_test_format2.db".to_string(),
+            "rbac_test_format2.db".to_string(),
+        ),
+        (abs_url, abs_filename.clone()),
+        (
+            "sqlite:./rbac_test_format4.db".to_string(),
+            "rbac_test_format4.db".to_string(),
+        ),
+        (
+            "sqlite://./rbac_test_format5.db".to_string(),
+            "rbac_test_format5.db".to_string(),
+        ),
     ];
 
     for (url, filename) in formats {
-        let _ = std::fs::remove_file(filename);
+        let _ = std::fs::remove_file(&filename);
         let _ = std::fs::remove_file(format!("controller/{}", filename));
 
-        // Pre-create the file
-        if let Ok(mut f) = std::fs::File::create(format!("controller/{}", filename)) {
+        // Pre-create the file for relative paths under controller/
+        if !filename.starts_with('/') {
+            if let Ok(mut f) = std::fs::File::create(format!("controller/{}", filename)) {
+                use std::io::Write;
+                let _ = f.write_all(&[]);
+            }
+        } else if let Ok(mut f) = std::fs::File::create(&filename) {
             use std::io::Write;
             let _ = f.write_all(&[]);
         }
 
         let pool = sqlx::any::AnyPoolOptions::new()
             .max_connections(1)
-            .connect(url)
+            .connect(&url)
             .await;
 
         let pool_ok = pool.is_ok();
@@ -381,14 +399,14 @@ async fn test_sqlx_connect() {
             "None".to_string()
         };
 
-        let file_exists = std::fs::metadata(filename).is_ok()
+        let file_exists = std::fs::metadata(&filename).is_ok()
             || std::fs::metadata(format!("controller/{}", filename)).is_ok();
         println!(
             "URL: {} -> Result: {}, Error: {}, File exists: {}",
             url, pool_ok, err_msg, file_exists
         );
 
-        let _ = std::fs::remove_file(filename);
+        let _ = std::fs::remove_file(&filename);
         let _ = std::fs::remove_file(format!("controller/{}", filename));
     }
 }

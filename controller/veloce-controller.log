@@ -1,2 +1,0 @@
-2026-07-01T13:41:49.126223Z  INFO veloce_controller::config: Using default configuration
-2026-07-01T13:41:49.130931Z ERROR veloce_controller::config: CRITICAL: api_port is enabled but api_key is not configured. Configure VELOCE_API_KEY environment variable or api_key in veloce.toml.

@@ -307,7 +307,7 @@ fn AppContent() -> impl IntoView {
             });
         }
 
-        // Periodic fileserver and MCP health checks (run every 5 seconds)
+        // Periodic fileserver health checks (run every 5 seconds)
         let handle = set_interval_with_handle(
             move || {
                 if conf.clone().flatten().is_some() {

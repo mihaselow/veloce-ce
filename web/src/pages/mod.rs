@@ -2,7 +2,6 @@ mod containers;
 mod dashboard;
 mod job_details;
 mod jobs;
-mod kepler_examples;
 mod nodes;
 mod submit;
 

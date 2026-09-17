@@ -557,7 +557,7 @@ async fn test_static_api_keys_and_secret_deprecation() {
     let static_key_hash = hash_token(static_key_plaintext);
 
     let api_keys_json = format!(
-        "[{{\"id\":\"mcp-ha-key\",\"key_hash\":\"{}\",\"roles\":[\"operator\",\"viewer\"],\"linked_component_id\":\"mcp-ha\"}}]",
+        "[{{\"id\":\"cli-ha-key\",\"key_hash\":\"{}\",\"roles\":[\"operator\",\"viewer\"],\"linked_component_id\":\"cli-ha\"}}]",
         static_key_hash
     );
 

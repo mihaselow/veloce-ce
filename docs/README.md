@@ -1,6 +1,6 @@
 # Documentation
 
-Guides for this repository. Per-crate flags and internals live next to the source.
+Guides for this repository. Per-crate flags and internals live next to the source. Contributing: [CONTRIBUTING.md](../CONTRIBUTING.md). Security: [SECURITY.md](../SECURITY.md).
 
 | Document | Contents |
 |----------|----------|

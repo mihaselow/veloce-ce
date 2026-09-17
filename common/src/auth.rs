@@ -35,7 +35,6 @@ pub const ROLE_OPERATOR: &str = "operator";
 pub const ROLE_ADMIN: &str = "admin";
 pub const ROLE_WORKER: &str = "worker";
 pub const ROLE_CLI: &str = "cli";
-pub const ROLE_MCP: &str = "mcp";
 pub const ROLE_FILESERVER: &str = "fileserver";
 pub const ROLE_WEB: &str = "web";
 

@@ -2206,7 +2206,7 @@ mod scheduler_tests {
             .issue_token(
                 "client1",
                 veloce_common::auth::ComponentType::Client,
-                &["mcp".to_string()],
+                &["cli".to_string()],
             )
             .await
             .unwrap();

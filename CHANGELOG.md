@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Public-readiness scrub: remove product-overlay UI and unused client-role leftovers; drop tracked build junk; document lab insecure defaults and contributing
+
 ## 1.0.0-beta.3
 
 - Persist per-worker log file IDs after multi-node completion so history `--rank` / `?rank=` work ([#4](https://github.com/mihaselow/veloce-ce/issues/4))
@@ -13,7 +15,7 @@
 - Call out Apptainer as an optional worker-host prerequisite (not needed on a dedicated controller)
 - jsonwebtoken `aws_lc_rs` backend (no `rsa` crate) so OIDC tests have a CryptoProvider
 - Lab REST route map, `SECURITY.md`, `rust-toolchain.toml`, `examples/hello_sleep.sh`
-- Dashboard admin/telemetry no longer labels MCP or federation nodes
+- Dashboard admin/telemetry no longer labels external overlay or federation nodes
 - `jsonwebtoken` 10.x for controller OIDC
 
 ## 1.0.0-beta.2

@@ -1,4 +1,4 @@
-//! CLI/MCP Noise RPC client handler.
+//! CLI Noise RPC client handler.
 
 use crate::handlers::worker::send_to_worker;
 use crate::{
@@ -857,8 +857,7 @@ where
                 let is_local = component_id == "controller"
                     || component_id == local_hostname
                     || normalized_id == local_hostname
-                    || component_id == "fileserver"
-                    || component_id == "mcp";
+                    || component_id == "fileserver";
 
                 if is_local {
                     let content = match log_source.as_str() {
