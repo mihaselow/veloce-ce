@@ -1,34 +1,36 @@
 # Veloce Fileserver
 
-The **Veloce Fileserver** is the central data depot and container registry for the cluster. It provides a high-performance, secure, and S3-compatible storage service tailored for engineering simulations and large-scale data staging.
+HTTPS staging store and Apptainer image registry for the cluster. S3-compatible endpoints exist for tooling; prefer the native REST API in production.
 
-## 📦 Multi-Protocol Storage
+## Interfaces
 
-The fileserver implements two primary interfaces for maximum flexibility:
+### Native REST (`/api/v1/files`)
 
-### **1. Native REST API (`/api/v1/files`)**
-A lightweight, UUID-based API designed for internal cluster operations:
-- **Fast Upload/Download**: Optimized for low-latency job input staging and result retrieval.
-- **UUID Mapping**: Automatically generates unique IDs for every file, eliminating filename collisions.
-- **Multipart Support**: Native support for splitting large uploads into chunks for reliable transfer.
+UUID-based API for internal staging:
 
-### **2. S3-Compatible API (`/s3`) — dev/legacy**
-A subset of the Amazon S3 API for local tooling and worker staging paths:
-- **Bucket Operations**: Support for `ListObjectsV2`, `PutObject`, `GetObject`, and `DeleteObject`.
-- **Multipart Uploads**: Full S3-compliant multipart lifecycle (`Initiate`, `UploadPart`, `Complete`, `Abort`).
-- **Internal Bridge**: A special `/s3/legacy` bucket allows S3-compatible tools to access files originally uploaded via the Native REST API.
+- Upload and download for job inputs and results
+- Unique IDs per object (no filename collisions)
+- Multipart uploads for large transfers
 
-**Production:** Prefer `/api/v1/files` (via the controller proxy). When `/s3/*` is used, present `X-API-KEY` with the fileserver API key. Legacy substring `Authorization` matching is available only when `VELOCE_ALLOW_INSECURE=true` (dev/lab).
+### S3-compatible (`/s3`) — dev / legacy
 
-## 🚀 Key Features
+Subset of Amazon S3 for local tools and worker staging paths:
 
-- **Apptainer Registry**: Acts as the central distribution point for `.sif` container images. The Fileserver manages the storage and lifecycle of these images, while the Controller tracks their manifests.
-- **Secure Transport**: Mandatory **HTTPS/TLS** (via `rustls`) for all data transfers.
-- **Unified Authentication**: Native REST and hardened `/s3/*` use `X-API-KEY` with the fileserver API key.
-- **Automated Lifecycle Management**: Background tasks automatically purge expired files from the staging area based on a configurable retention policy, preventing disk exhaustion.
-- **Staging-to-Archive**: Seamlessly integrates with the Veloce Web Dashboard for automated "Input Deck" staging and "Result Archive" retrieval.
+- `ListObjectsV2`, `PutObject`, `GetObject`, `DeleteObject`
+- Multipart lifecycle (`Initiate`, `UploadPart`, `Complete`, `Abort`)
+- `/s3/legacy` bridges to objects originally uploaded via native REST
 
-## ⚙️ Configuration
+**Production:** prefer `/api/v1/files` (often via the controller proxy). For `/s3/*`, send `X-API-KEY` with the fileserver key. Legacy `Authorization` substring matching is available only when `VELOCE_ALLOW_INSECURE=true` (lab/dev).
+
+## Features
+
+- **Apptainer registry** — stores `.sif` blobs; the controller tracks manifests
+- **TLS** — HTTPS via `rustls` for all traffic
+- **Auth** — native REST and hardened `/s3/*` use `X-API-KEY` (`VELOCE_FILESERVER_KEY`)
+- **Retention** — background purge of expired staging objects
+- **Dashboard staging** — supports input-deck upload and result download flows
+
+## Configuration
 
 Configured via `veloce-fileserver.toml` in the current working directory. Sample: [`examples/veloce-fileserver.toml`](../examples/veloce-fileserver.toml).
 
@@ -40,10 +42,10 @@ cert_path = "cert.pem"
 key_path = "key.pem"
 ```
 
-## 🏗 Dependencies
+## Dependencies
 
-- **`axum`**: Modern web framework for both REST and S3 layers.
-- **`axum-server`**: High-performance Rustls integration.
-- **`quick-xml`**: Efficient XML serialization for S3 compatibility.
-- **`tokio`**: Asynchronous runtime for high-concurrency I/O.
-- **`md5`**: For S3 ETag calculation and integrity verification.
+- **`axum`** — REST and S3 HTTP layers
+- **`axum-server`** — rustls listener
+- **`quick-xml`** — S3 XML
+- **`tokio`** — async I/O
+- **`md5`** — S3 ETags

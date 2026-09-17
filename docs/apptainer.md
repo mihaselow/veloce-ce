@@ -1,12 +1,12 @@
 # Apptainer
 
-Veloce runs Apptainer (formerly Singularity) `.sif` images on workers without a container daemon. Images are stored on the fileserver; the controller holds manifests; workers pull and `apptainer exec` inside the job cgroup.
+Veloce runs Apptainer (formerly Singularity) `.sif` images on workers without a container daemon. Images live on the fileserver; the controller holds manifests; workers pull and run `apptainer exec` inside the job cgroup.
 
 ## Prerequisite (workers only)
 
-Apptainer is **optional**. Bare-metal jobs do not need it.
+Apptainer is **optional**. Host binaries do not need it.
 
-To run `--image` / registered `.sif` jobs, install Apptainer on **every worker node** that should execute those jobs, and put `apptainer` on that host’s `PATH` (same user as `veloce-worker`, typically). The controller and fileserver never call `apptainer`; a dedicated head node does not need the package unless it also runs a worker.
+To run `--image` / registered `.sif` jobs, install Apptainer on **every worker** that should execute those jobs, and put `apptainer` on that host’s `PATH` (same user as `veloce-worker`). The controller and fileserver never call `apptainer`. A dedicated head node does not need the package unless it also runs a worker.
 
 ```bash
 # on the worker

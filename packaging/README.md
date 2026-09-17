@@ -16,7 +16,7 @@ Formats per package: `.deb`, `.rpm`, and `.tar.gz`, plus a release-wide `SHA256S
 ## Install notes
 
 1. Install only what the node needs (workers do not need the controller package).
-2. Copy `*.example` configs to the live path your process expects (often cwd or `/etc/veloce/…` without `.example`), then edit secrets.
+2. Copy `*.example` configs to the live path your process expects (often the working directory or `/etc/veloce/…` without `.example`), then set secrets.
 3. Create `/var/lib/veloce` for the systemd working directory.
 4. Units are **not** enabled by package scripts. After install:
 
@@ -34,7 +34,7 @@ Actions → **Release packages** → **Run workflow**. Download the `veloce-ce-l
 ## Limits (v1)
 
 - **amd64 only.** An `arm64` matrix can be added later without changing package names.
-- No apt/yum repository hosting — GitHub Release assets only.
+- No apt/yum repository hosting—GitHub Release assets only.
 - No code signing (Cosign/GPG) yet.
 - `veloce-slurm` and the WASM dashboard are not packaged here.
 

@@ -8,7 +8,7 @@ Copy these into the directory you run the daemons from (see [docs/quickstart.md]
 | [`veloce-web.toml`](veloce-web.toml) | `veloce-controller` (cwd; public dashboard + API key wiring) |
 | [`veloce-worker.toml`](veloce-worker.toml) | `veloce-worker` (cwd) |
 | [`veloce-fileserver.toml`](veloce-fileserver.toml) | `veloce-fileserver` (cwd) |
-| [`examples/cli-config.toml`](cli-config.toml) | `veloce` when copied to `~/.veloce/config.toml` |
+| [`cli-config.toml`](cli-config.toml) | `veloce` when copied to `~/.veloce/config.toml` |
 | [`hello_sleep.sh`](hello_sleep.sh) | Submit `/bin/sleep 5` once the CLI can reach a controller |
 
-Environment variables in the comments override the TOML fields of the same name when set.
+Environment variables named in the comments override the TOML fields of the same name when set.

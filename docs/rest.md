@@ -1,6 +1,6 @@
 # HTTPS API (controller)
 
-The controller listens on `api_port` (sample: `8080`) with TLS. Authenticate with `X-API-KEY` or an OIDC session cookie. This is a map of routes in this tree, not a full schema.
+The controller listens on `api_port` (sample: `8080`) with TLS. Authenticate with `X-API-KEY` or an OIDC session cookie. This page lists routes in this tree; it is not a full OpenAPI schema.
 
 ## Cluster
 

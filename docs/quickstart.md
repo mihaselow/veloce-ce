@@ -1,10 +1,10 @@
 # Quickstart (single-node lab)
 
-This walkthrough starts a fileserver, controller, and one worker on the same Linux host. It uses self-signed TLS and file-backed accounting. Use it to confirm a build; do not copy the self-signed certs or example keys into a real cluster.
+Start a fileserver, controller, and one worker on the same Linux host. This walkthrough uses self-signed TLS and file-backed accounting to confirm a build. Do not reuse the self-signed certificates or example keys on a production cluster.
 
-**Needs:** Rust 1.94 or newer, OpenSSL CLI, Linux with cgroup v2 for real job isolation. The dashboard also needs [Trunk](https://trunkrs.dev).
+**Requirements:** Rust 1.94 or newer, OpenSSL CLI, and Linux with cgroup v2 for real job isolation. The dashboard also needs [Trunk](https://trunkrs.dev).
 
-**Optional — Apptainer:** not required for `/bin/sleep` or other host binaries. For `.sif` / `--image` jobs, install [Apptainer](https://apptainer.org/) on **each worker host** (the machine running `veloce-worker`). A split cluster means the controller box does not need it unless that box is also a worker. Confirm with `apptainer version` on the worker before [apptainer.md](apptainer.md).
+**Optional — Apptainer:** not required for `/bin/sleep` or other host binaries. For `.sif` / `--image` jobs, install [Apptainer](https://apptainer.org/) on **each worker host** (the machine running `veloce-worker`). A dedicated controller host does not need Apptainer unless it also runs a worker. Confirm with `apptainer version` on the worker before [apptainer.md](apptainer.md).
 
 ## 1. Build
 
@@ -16,7 +16,7 @@ cargo build --locked --release \
   -p veloce-cli -p veloce-fileserver -p veloce-slurm
 ```
 
-Binaries land in `target/release/` (`veloce`, `veloce-controller`, `veloce-worker`, `veloce-fileserver`, `veloce-slurm`). Put that directory on `PATH`, or invoke them with a full path.
+Binaries land in `target/release/` (`veloce`, `veloce-controller`, `veloce-worker`, `veloce-fileserver`, `veloce-slurm`). Put that directory on `PATH`, or invoke binaries with a full path.
 
 Optional dashboard:
 
@@ -43,7 +43,7 @@ cp "$REPO/examples/veloce-fileserver.toml" veloce-fileserver.toml
 cp "$REPO/examples/veloce-web.toml" veloce-web.toml
 ```
 
-Fill the `CHANGE_ME_*` placeholders in those files with the same three values you exported (or rely on the env vars listed in each sample). `VELOCE_SECRET` is the Noise mesh PSK only; it is not a REST API key.
+Replace every `CHANGE_ME_*` placeholder with the three values you exported (or rely on the env vars listed in each sample). `VELOCE_SECRET` is the Noise mesh PSK only; it is not a REST API key.
 
 ## 3. TLS certificates
 
@@ -57,11 +57,11 @@ openssl req -x509 -newkey rsa:2048 -sha256 -days 365 -nodes \
 chmod 600 key.pem
 ```
 
-For a first bring-up against this self-signed pair, set `VELOCE_ALLOW_INSECURE=true` in the shells that start the daemons and the CLI. Turn that off once you have a real CA.
+For a first bring-up against this self-signed pair, set `VELOCE_ALLOW_INSECURE=true` in the shells that start the daemons and the CLI. Disable that once you use a real CA.
 
 ## 4. Start the daemons
 
-Three terminals, all in `$HOME/veloce-lab`, with the same `VELOCE_*` exports:
+Use three terminals in `$HOME/veloce-lab`, with the same `VELOCE_*` exports:
 
 ```bash
 # terminal 1
@@ -77,7 +77,7 @@ veloce-worker
 
 ## 5. CLI
 
-Configure the client (env is enough for a lab):
+Configure the client (environment variables are enough for a lab):
 
 ```bash
 export VELOCE_CONTROLLER=127.0.0.1:9000
@@ -92,11 +92,11 @@ veloce jobs logs <JOB_ID> --follow
 
 Once the CLI works, [`examples/hello_sleep.sh`](../examples/hello_sleep.sh) submits the same sleep job via `--json`.
 
-Persistent CLI defaults (optional): copy [`examples/cli-config.toml`](../examples/cli-config.toml) to `~/.veloce/config.toml`. Flags override environment variables, which override that file.
+Optional persistent defaults: copy [`examples/cli-config.toml`](../examples/cli-config.toml) to `~/.veloce/config.toml`. Flags override environment variables, which override that file.
 
 ## 6. Dashboard
 
-`trunk serve` from `web/` proxies `/api/v1/` to `https://127.0.0.1:8080`. Or set `web_dist_path` on the controller to the Trunk `dist/` directory and open the controller HTTPS API port in a browser.
+`trunk serve` from `web/` proxies `/api/v1/` to `https://127.0.0.1:8080`. Alternatively, set `web_dist_path` on the controller to the Trunk `dist/` directory and open the controller HTTPS API port in a browser.
 
 ## Next
 

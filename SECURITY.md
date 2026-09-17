@@ -10,15 +10,15 @@ If that form is unavailable, email [hello@veloce-hpc.io](mailto:hello@veloce-hpc
 
 Include:
 
-- Affected crate and version (`1.0.0-beta.2` or git SHA)
+- Affected crate and version (`1.0.0-beta.3` or git SHA)
 - A short description of the issue and impact
-- Steps or a proof of concept if you have one
+- Steps or a proof of concept, if available
 - Whether you plan to disclose on a timeline
 
-You should hear back within a few days. Please wait for a fix or coordinated disclosure before posting details publicly.
+You should hear back within a few days. Wait for a fix or coordinated disclosure before posting details publicly.
 
 ## Scope
 
-This repository is the Veloce control plane you can clone and build (controller, worker, CLI, fileserver, web dashboard, `veloce-slurm`). Issues in those crates, their TLS/API auth, and the Noise mesh are in scope.
+In scope: the Veloce control plane in this repository (controller, worker, CLI, fileserver, web dashboard, `veloce-slurm`), including TLS/API authentication and the Noise mesh.
 
 Out of scope: denial of service against a lab you do not operate, social engineering, and physical access.

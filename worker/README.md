@@ -1,65 +1,68 @@
 # Veloce Worker
 
-The **Veloce Worker** is the "Muscle" of the cluster. It is a high-performance execution agent that manages process lifecycles, resource isolation, real-time telemetry, and secure internal cluster communication.
+Execution agent on each Linux node: process lifecycle, cgroup isolation, telemetry, and Noise mesh I/O.
 
-## 🚀 Advanced Execution & Isolation
+## Execution and isolation
 
-The worker utilizes modern Linux kernel features to provide robust and secure workload execution.
+### Cgroup v2 pivot
 
-### **1. Cgroup v2 Isolation & The "Pivot Strategy"**
-To enforce strict resource boundaries, the worker implements a sophisticated **Pivot Strategy** for Cgroup v2 management:
-- **Pivoting**: Moves the main worker process into a dedicated `/worker` sub-cgroup, "clearing" the root hierarchy.
-- **Strict Enforcement**: Enables `cpu`, `memory`, `pids`, and device controllers for the entire subtree.
-- **Job Containers**: Every job is executed in a unique, strictly governed cgroup path (e.g., `/veloce/job-<id>`), preventing resource leakage and interference between tasks.
+The worker enforces resource limits with a cgroup v2 **pivot**:
 
-### **2. First-Class Apptainer Support**
-Natively orchestrates **Apptainer** `.sif` container images when the **worker host** has Apptainer installed (`apptainer` on `PATH`). This is optional: the worker runs host binaries without it. The controller/fileserver only store and register images.
+- Moves the worker process into a `/worker` sub-cgroup so the root hierarchy can host job trees
+- Enables `cpu`, `memory`, `pids`, and device controllers for the subtree
+- Places each job under a dedicated path (for example `/veloce/job-<id>`)
 
-- **Daemonless Execution**: No persistent container daemon required.
-- **Seamless Integration**: Inherits Cgroup v2 constraints and GPU isolation natively.
-- **Automatic Staging**: Securely fetches and caches container images from the S3-compatible Veloce Fileserver.
+### Apptainer
 
-Install notes: [docs/apptainer.md](../docs/apptainer.md).
+When the **worker host** has Apptainer installed (`apptainer` on `PATH`), the worker can run `.sif` images. Apptainer is optional for host binaries. The controller and fileserver only store and register images.
 
-### **3. Native PMI-1/PMI-2 Implementation**
-Includes a zero-dependency implementation of the **Process Management Interface** wire protocols.
-- **`mpirun`-less Launch**: Enables MPI applications to run directly without external launchers.
-- **Distributed Coordination**: Manages rank barriers and key-value exchanges over custom async TCP listeners, coordinated by the Controller.
+- No container daemon
+- Jobs inherit cgroup v2 and GPU device filters
+- Images are fetched and cached from the fileserver
 
-### **4. Generic Resource (GRES) & GPU Pining**
-- **Discovery**: Automatically detects NVIDIA GPUs via **NVML**.
-- **Hardware Pinning**: Maps specific device IDs (e.g., GPU 0, 2) to jobs and enforces access via Cgroup v2 device filters.
+See [docs/apptainer.md](../docs/apptainer.md).
 
-## 📡 Real-time Monitoring & Interactive Access
+### PMI-1 / PMI-2
 
-### **1. High-Resolution Telemetry**
-Streams host and job-specific metrics to the Controller at a configurable interval:
-- **Host**: CPU load, Net RX/TX, Disk IO (bytes/ops), and thermal data.
-- **GPU**: Real-time utilization, VRAM usage, and thermal readouts.
-- **Job**: Per-process CPU and RSS memory usage.
+An in-tree Process Management Interface implementation lets MPI apps rendezvous without an external launcher. Barriers and key-value exchange use async TCP, coordinated by the controller.
 
-### **2. Interactive Sessions (TTY & VNC)**
-Provides secure, real-time access to running jobs through the cluster control plane:
-- **Web TTY**: Spawns a PTY and attaches to the job's Linux namespace (`mnt`, `uts`, `net`, etc.) via `nsenter`.
-- **Graphical VNC**: Bridges loopback VNC servers from inside container namespaces to the browser-based **noVNC** client via a secure Noise-encrypted tunnel. No public ports required.
+### GRES and GPUs
 
-## 🏗 Architecture & Internal Modules
+- Discovers NVIDIA GPUs via **NVML**
+- Pins assigned device IDs into the job and enforces them with cgroup device filters
 
-- **`main.rs`**: Core event loop, Noise connection management, and high-level job lifecycle orchestration.
-- **`cgroups.rs`**: Linux-native Cgroup v2 management for CPU, Memory, and Device (GRES) isolation.
-- **`pmi/`**: Implementation of the PMI-1 and PMI-2 wire protocols for zero-dependency MPI execution.
-- **`apptainer.rs`**: Secure orchestration logic for fetching and running `.sif` container images.
-- **`terminal.rs`**: PTY allocation and management for the integrated Web TTY.
-- **`vnc.rs`**: Loopback bridge and WebSocket proxying for graphical sessions.
+## Monitoring and interactive access
 
-## 🛡️ Reliability & Security
+### Telemetry
 
-- **Pivot Recovery**: Persists running job state to `veloce_worker_jobs.bin`, allowing the worker to re-attach to active processes after a crash or restart.
-- **User Impersonation**: Securely executes jobs as the requesting user (`setuid`/`setgid`).
-- **Noise Protocol**: All commands, telemetry, and interactive data are encrypted and authenticated via the **Noise Protocol Framework**.
-- **Graceful Draining**: Implements the `WorkerDraining` protocol so in-flight jobs can finish before a node is taken out of the pool.
+Streams host and job metrics to the controller on a configurable interval:
 
-## ⚙️ Configuration
+- **Host** — CPU load, network RX/TX, disk I/O, thermal data
+- **GPU** — utilization, VRAM, temperature
+- **Job** — per-process CPU and RSS
+
+### TTY and VNC
+
+- **Web TTY** — PTY attached into the job namespaces via `nsenter`
+- **VNC** — bridges loopback VNC inside the container/job to the dashboard noVNC client over Noise (no public VNC ports)
+
+## Modules
+
+- **`main.rs`** — Noise connection and job lifecycle
+- **`cgroups.rs`** — cgroup v2 for CPU, memory, and devices
+- **`pmi/`** — PMI-1/2 wire protocols
+- **`apptainer.rs`** — fetch and run `.sif` images
+- **`terminal.rs`** — PTY for Web TTY
+- **`vnc.rs`** — loopback bridge and WebSocket proxy
+
+## Reliability and security
+
+- **Pivot recovery** — persists running jobs to `veloce_worker_jobs.bin` so the worker can reattach after restart
+- **User impersonation** — runs jobs as the requesting OS user (`setuid` / `setgid`)
+- **Noise** — commands, telemetry, and interactive streams are authenticated and encrypted
+- **Draining** — `WorkerDraining` lets in-flight jobs finish before the node leaves the pool
+
+## Configuration
 
 Configured via `veloce-worker.toml` in the current working directory. Sample: [`examples/veloce-worker.toml`](../examples/veloce-worker.toml).
 
@@ -78,11 +81,11 @@ idle_timeout_seconds = 600
 # gpu = 2
 ```
 
-## 🏗 Dependencies
+## Dependencies
 
-- **`veloce-common`**: Core protocols and data models.
-- **`sysinfo`**: Cross-platform system and process telemetry.
-- **`nvml-wrapper`**: NVIDIA GPU discovery and monitoring.
-- **`nix`**: Low-level Linux/Unix system calls.
-- **`portable-pty`**: Cross-platform PTY support.
-- **`tokio`**: Asynchronous runtime.
+- **`veloce-common`** — protocols and models
+- **`sysinfo`** — host and process telemetry
+- **`nvml-wrapper`** — NVIDIA discovery and metrics
+- **`nix`** — Linux system calls
+- **`portable-pty`** — PTY support
+- **`tokio`** — async runtime

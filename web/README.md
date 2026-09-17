@@ -1,30 +1,29 @@
 # Veloce Web Dashboard
 
-The **Veloce Web Dashboard** is a high-performance, reactive web interface for cluster management. Built with **Leptos** and compiled to **WebAssembly (Wasm)**, it provides a single-page application experience directly in the browser.
+Reactive cluster UI built with **Leptos** and compiled to **WebAssembly**.
 
-## Reactive monitoring and visualization
+## Monitoring
 
-The dashboard is designed for observability into cluster health and individual job execution.
+- **Core grid** — workers and per-core CPU utilization (2–5s polling)
+- **WebSocket refresh** — job and node lists subscribe to `/api/v1/ws/events`, then refetch
+- **Per-job metrics (SSE)** — job detail streams CPU via `/api/v1/jobs/:id/metrics/stream` ([`metrics_chart.rs`](src/metrics_chart.rs))
+- **Statistics** — bucketed node metrics from the controller REST API
 
-### Cluster and job views
-- **Cluster core grid**: Live-updating map of worker nodes and per-core CPU utilization (2–5s polling).
-- **WebSocket refresh**: Job and node list pages subscribe to `/api/v1/ws/events` for push invalidation, then refetch data.
-- **Per-job metrics (SSE)**: The job detail page streams CPU metrics via Server-Sent Events (`/api/v1/jobs/:id/metrics/stream`) in [`metrics_chart.rs`](src/metrics_chart.rs).
-- **Historical statistics**: The statistics page fetches bucketed node metrics from the controller REST API.
+## Interactive access
 
-### Interactive job access
-- **Web-based TTY**: xterm.js terminal with authenticated WebSocket access proxied through the controller.
-- **Graphical VNC**: noVNC canvas bridged through the control plane.
-- **Log tailing**: stdout/stderr for active jobs with periodic refresh on the job detail page.
+- **Web TTY** — xterm.js over an authenticated WebSocket through the controller
+- **VNC** — noVNC canvas bridged through the control plane
+- **Logs** — stdout/stderr on the job detail page with periodic refresh
 
-### Orchestration
-- **Job submission**: Solver templates, CWL upload, file staging, and command preview.
-- **Container registry**: Lists Apptainer assets from `GET /api/v1/containers` (registration via CLI/REST; admin UI registration is planned).
-- **HA status**: Controller leader/standby and component health on the dashboard.
+## Orchestration
 
-### Runtime configuration
+- **Submit** — solver templates, CWL upload, file staging, command preview
+- **Containers** — lists Apptainer assets from `GET /api/v1/containers` (register via CLI/REST; admin UI registration is planned)
+- **HA status** — controller leader/standby and component health
 
-The dashboard loads **`/web-config.json`** from the controller. In hardened deployments this returns a public config only (no API keys):
+## Runtime configuration
+
+The dashboard loads **`/web-config.json`** from the controller. In hardened mode this is public config only (no API keys):
 
 ```json
 {
@@ -33,14 +32,14 @@ The dashboard loads **`/web-config.json`** from the controller. In hardened depl
 }
 ```
 
-OIDC mode uses HttpOnly session cookies for API calls. Legacy API-key mode stores the controller key in `sessionStorage` after login validation.
+OIDC mode uses HttpOnly session cookies. Legacy API-key mode stores the controller key in `sessionStorage` after login validation.
 
-## Architecture and tech stack
+## Architecture
 
-- **Frontend**: Leptos (Rust → Wasm), `gloo-net` for HTTP/WebSocket
-- **Shared models**: `veloce-common`
-- **Styling**: [`style.css`](style.css) — dark theme, CSS variables
-- **Build**: [Trunk](Trunk.toml)
+- **Frontend** — Leptos (Rust → Wasm), `gloo-net` for HTTP/WebSocket
+- **Models** — `veloce-common`
+- **Styling** — [`style.css`](style.css) (CSS variables)
+- **Build** — [Trunk](Trunk.toml)
 
 ### Local development
 
@@ -50,18 +49,18 @@ trunk serve
 
 Trunk proxies `/api/v1/` to the local controller (`127.0.0.1:8080`). Lab wiring: [docs/quickstart.md](../docs/quickstart.md). Sample `veloce-web.toml`: [`examples/veloce-web.toml`](../examples/veloce-web.toml).
 
-### Production release
+### Production build
 
 ```bash
 trunk build --release
 ```
 
-Serve `dist/` from the controller static path or nginx.
+Serve `dist/` from the controller static path or a reverse proxy.
 
 ## Dependencies
 
-- `leptos` / `leptos_router` — reactive UI and routing
+- `leptos` / `leptos_router` — UI and routing
 - `gloo-net` — HTTP and WebSocket from Wasm
-- `veloce-common` — shared cluster types
+- `veloce-common` — shared types
 - `wasm-bindgen` / `web-sys` — browser APIs
-- `chrono` — timestamps in the browser
+- `chrono` — timestamps

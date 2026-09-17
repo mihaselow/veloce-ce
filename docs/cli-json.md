@@ -1,40 +1,28 @@
-Version: 1.0.0-beta.2
+Version: 1.0.0-beta.3
 
-# Veloce CLI JSON Output Reference
+# Veloce CLI JSON output reference
 
-This document is the source of truth for JSON written by `veloce --json`.
-Any CLI change that adds, removes, renames, or changes the type of JSON fields
-must update this page in the same change.
+Canonical contract for JSON written by `veloce --json`. Update this page in the same change whenever a field is added, removed, renamed, or changes type.
 
-The CLI has two JSON output families:
+Two output families:
 
-- **Command envelopes**: Small, command-specific result objects such as submit,
-  kill, and reservation create acknowledgements.
-- **Shared DTO output**: Pretty-printed serialization of shared Rust structs
-  from `veloce-common`, such as `JobInfo`, `JobUsage`, `WorkerInfo`,
-  `NodeMetrics`, `Reservation`, `JobEvent`, and `ContainerAsset`.
+- **Command envelopes** — small, command-specific objects (submit, kill, reservation create, and similar acknowledgements)
+- **Shared DTO output** — pretty-printed `veloce-common` structs such as `JobInfo`, `JobUsage`, `WorkerInfo`, `NodeMetrics`, `Reservation`, `JobEvent`, and `ContainerAsset`
 
-## Contract Rules
+## Contract rules
 
-- JSON is written to `stdout`.
-- Progress messages for JSON-capable commands are written to `stderr`.
-- Errors are currently human-readable on `stderr` and usually exit non-zero;
-  they are not guaranteed to be JSON.
-- Timestamps are Unix epoch seconds unless a field explicitly says otherwise.
-- Memory fields keep their struct units: requested memory is MB, most live
-  telemetry and peak memory fields are bytes.
-- `JobStatus` uses Serde's external tagging:
-  `"Pending"`, `"Running"`, `"Killed"`, `{"Completed": 0}`,
-  or `{"Failed": "message"}`.
-- `QosLevel` serializes as `"Background"`, `"Preemptible"`, `"Production"`,
-  or `"Interactive"`.
-- `JobInfo.secret` and `JobUsage.secret` are cleared before printing and appear as `""`
-  when the shared DTO includes the field.
+- JSON goes to `stdout`.
+- Progress for JSON-capable commands goes to `stderr`.
+- Errors are human-readable on `stderr` and usually exit non-zero; they are not guaranteed to be JSON.
+- Timestamps are Unix epoch seconds unless a field says otherwise.
+- Memory units follow the struct: requested memory is MB; most live telemetry and peak memory fields are bytes.
+- `JobStatus` uses Serde external tagging: `"Pending"`, `"Running"`, `"Killed"`, `{"Completed": 0}`, or `{"Failed": "message"}`.
+- `QosLevel` serializes as `"Background"`, `"Preemptible"`, `"Production"`, or `"Interactive"`.
+- `JobInfo.secret` and `JobUsage.secret` are cleared before print and appear as `""` when present on the DTO.
 
-Legacy top-level aliases produce the same JSON as their grouped command
-equivalents.
+Legacy top-level aliases emit the same JSON as their grouped command equivalents.
 
-## Command Summary
+## Command summary
 
 | Command | JSON shape |
 |---------|------------|
@@ -80,10 +68,9 @@ equivalents.
 }
 ```
 
-`connected_controller` and `worker_count` are `null` when no controller was
-reached or no worker list could be read.
+`connected_controller` and `worker_count` are `null` when no controller was reached or no worker list could be read.
 
-## Submit And Step Envelopes
+## Submit and step envelopes
 
 Single job submit:
 
@@ -124,8 +111,7 @@ Step submit:
 }
 ```
 
-`veloce submit --json --wait ...` suppresses the initial submit envelope and
-prints one terminal status envelope:
+`veloce submit --json --wait ...` suppresses the initial submit envelope and prints one terminal status envelope:
 
 ```json
 {
@@ -170,9 +156,8 @@ Array wait terminal states:
 
 ## Jobs
 
-`veloce jobs list --json` prints an array of sanitized `JobInfo` objects.
-`veloce jobs show <id> --json` prints one sanitized `JobInfo` for an active job
-or one sanitized `JobUsage` when the job is only available from history.
+`veloce jobs list --json` prints sanitized `JobInfo[]`.
+`veloce jobs show <id> --json` prints one sanitized `JobInfo` for an active job, or one sanitized `JobUsage` when the job exists only in history.
 
 Representative `JobInfo`:
 
@@ -312,9 +297,7 @@ Kill acknowledgement:
 
 ## Logs
 
-`veloce jobs logs <id> --json` prints newline-delimited JSON, one object per
-chunk. With `--follow`, objects continue until the command is interrupted or the
-controller closes the stream.
+`veloce jobs logs <id> --json` prints newline-delimited JSON, one object per chunk. With `--follow`, objects continue until interrupt or the controller closes the stream.
 
 ```json
 {
@@ -328,10 +311,9 @@ controller closes the stream.
 }
 ```
 
-For non-following reads with no available content, the CLI emits a single empty
-chunk with `bytes: 0`, empty `content`, and empty `content_base64`.
+Without `--follow`, if no content is available, the CLI emits one empty chunk (`bytes: 0`, empty `content` and `content_base64`).
 
-## Nodes And Metrics
+## Nodes and metrics
 
 `veloce nodes list --json` prints `WorkerInfo[]`:
 
@@ -360,7 +342,7 @@ chunk with `bytes: 0`, empty `content`, and empty `content_base64`.
     "process_count": 120,
     "swap_total": 0,
     "swap_free": 0,
-    "version": "1.0.0-beta.2",
+    "version": "1.0.0-beta.3",
     "cgroup_enabled": true,
     "gres": {"gpu": 1},
     "allocated_gres": {"gpu": [0]},
@@ -435,7 +417,7 @@ Delete:
 
 ## Containers
 
-List prints `ContainerAsset[]`:
+`veloce containers list --json` prints `ContainerAsset[]`:
 
 ```json
 [

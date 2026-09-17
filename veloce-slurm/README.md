@@ -1,8 +1,8 @@
-Version: 1.0.0-beta.2
+Version: 1.0.0-beta.3
 
 # veloce-slurm — Slurm front door, not a Slurm clone
 
-`veloce-slurm` is a **sidecar CLI** that speaks a familiar Slurm mouth (`sbatch`, `srun`, `squeue`, `scancel`, `sinfo`) and execs the existing [`veloce --json`](../docs/cli-json.md) client. It does **not** implement slurmd, partitions, slurmdbd, SPANK, or the Slurm wire protocol.
+`veloce-slurm` is a **sidecar CLI** that accepts familiar Slurm commands (`sbatch`, `srun`, `squeue`, `scancel`, `sinfo`) and execs [`veloce --json`](../docs/cli-json.md). It does **not** implement slurmd, partitions, slurmdbd, SPANK, or the Slurm wire protocol.
 
 Install (after `cargo build -p veloce-slurm`):
 
@@ -13,9 +13,9 @@ for cmd in sbatch srun squeue scancel sinfo; do
 done
 ```
 
-`VELOCE_BIN` overrides the `veloce` binary (default: `veloce` on `PATH`). Connection secrets stay in the Veloce CLI (`~/.veloce/config.toml`, `VELOCE_*`). JSON shapes are documented in [docs/cli-json.md](../docs/cli-json.md).
+`VELOCE_BIN` overrides the `veloce` binary (default: `veloce` on `PATH`). Connection secrets stay with the Veloce CLI (`~/.veloce/config.toml`, `VELOCE_*`). JSON shapes: [docs/cli-json.md](../docs/cli-json.md).
 
-This is a translation layer. Native Veloce is the HTTPS API and the `veloce` CLI.
+This is a translation layer. Native control remains the HTTPS API and the `veloce` CLI.
 
 ---
 
@@ -29,7 +29,7 @@ This is a translation layer. Native Veloce is the HTTPS API and the `veloce` CLI
 | `sinfo` | `veloce --json nodes list` |
 | `srun` | `veloce --json submit --wait`, or `veloce --json step --wait` when `VELOCE_JOB_ID` is set |
 
-`squeue` prints a `PARTITION` column for muscle memory; the value is the Veloce **QoS**, not a Slurm partition.
+`squeue` prints a `PARTITION` column for familiarity; the value is the Veloce **QoS**, not a Slurm partition.
 
 Not in v1: `salloc`, `scontrol`, `sacct`, `libslurm`, `slurmrestd`.
 
@@ -37,7 +37,7 @@ Not in v1: `salloc`, `scontrol`, `sacct`, `libslurm`, `slurmrestd`.
 
 ## Honor / translate / skip / reject
 
-Unsupported `#SBATCH` and CLI options are **skipped** (stderr warning) and the job is still submitted. That is intentional: brownfield scripts are full of site folklore Veloce will not grow into.
+Unsupported `#SBATCH` and CLI options are **skipped** (stderr warning) and the job is still submitted. That is intentional: brownfield scripts often carry site options Veloce will not emulate.
 
 Stderr (grep-stable):
 
@@ -77,7 +77,7 @@ Do not pretend these exist in Veloce:
 
 - `--partition` names that are not Veloce QoS
 - `--account`
-- `--licenses` — Slurm license tokens are slurmdbd counters; this facade does not map them onto Veloce jobs.
+- `--licenses` — Slurm license tokens are slurmdbd counters; this facade does not map them onto Veloce jobs
 - `--constraint` / `--nodelist` / `--exclude`
 - `--exclusive` / `--oversubscribe` / `--contiguous` / `--switches`
 - `--cpu-bind` / `--mem-bind` / `--hint` / `--ntasks-per-socket` / `--ntasks-per-node` / `--ntasks`
@@ -93,13 +93,13 @@ Do not pretend these exist in Veloce:
 
 ### Reject (bad mapped values)
 
-The job is **not** submitted when a flag we *would* honor cannot be parsed: invalid `--time`, malformed `--array`, unknown `--dependency` kind (e.g. `aftercorr`), missing script/`--wrap`.
+The job is **not** submitted when a mapped flag cannot be parsed: invalid `--time`, malformed `--array`, unknown `--dependency` kind (for example `aftercorr`), or missing script/`--wrap`.
 
 ---
 
 ## `SLURM_*` inside the job
 
-Workers only inject `VELOCE_*`. The facade wraps the user command so aliases appear at start:
+Workers inject `VELOCE_*` only. The facade wraps the user command so aliases appear at start:
 
 `SLURM_JOB_ID` ← `VELOCE_JOB_ID`, `SLURM_ARRAY_JOB_ID` ← `VELOCE_ARRAY_JOB_ID`, `SLURM_ARRAY_TASK_ID` ← `VELOCE_ARRAY_TASK_ID`, `SLURM_NODELIST` ← `VELOCE_NODES`, `SLURM_NNODES` ← `VELOCE_NODE_COUNT`, `SLURM_PROCID` ← `VELOCE_RANK`.
 
@@ -109,4 +109,4 @@ No worker code changes.
 
 ## Tests
 
-`cargo test -p veloce-slurm` is **facade-only**: parse/map, argv0 dispatch, a fake `veloce` that prints JSON fixtures. It does not start the controller or scheduler.
+`cargo test -p veloce-slurm` is **facade-only**: parse/map, argv0 dispatch, and a fake `veloce` that prints JSON fixtures. It does not start the controller or scheduler.

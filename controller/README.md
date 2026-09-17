@@ -1,44 +1,49 @@
 # Veloce Controller
 
-The **Veloce Controller** is the "Brain" of the cluster. It is a central management server responsible for resource tracking, multi-dimensional scheduling, high-availability coordination, and overall cluster orchestration.
+Central management server for the cluster: resource tracking, scheduling, HTTPS API, accounting, and high availability.
 
-## 🧠 Sophisticated Scheduling Engine
+## Scheduling
 
-The Veloce scheduler is designed to maximize throughput while ensuring fairness and resource efficiency.
+### Multi-dimensional matching
 
-### **1. Multi-Dimensional Candidate Selection**
-The scheduler evaluates jobs based on a complex resource vector:
-- **Cores**: Specific CPU core IDs and affinity.
-- **Memory**: Virtual allocation tracking to prevent over-subscription.
-- **Generic Resources (GRES)**: Tracking and specific device ID assignment (e.g., GPU 0, 2) for specialized hardware.
+The scheduler evaluates jobs against a resource vector:
 
-### **2. Gang Scheduling & Homogeneous Bundling**
-For multi-node jobs, Veloce implements strict **Homogeneous Bundling**. It groups nodes with identical CPU models and architectures to prevent rank desynchronization in parallel simulations. It ensures all required nodes are available before a job is dispatched.
+- **Cores** — specific CPU core IDs and affinity
+- **Memory** — virtual allocation tracking to avoid over-subscription
+- **GRES** — device counts and concrete IDs (for example GPU 0, 2)
 
-### **3. Fair Share Priority & Starvation Prevention**
-Jobs are sorted using a dynamic scoring system:
-- **Fair Share**: Penalizes heavy users based on decayed cumulative resource usage.
-- **Aging**: Accumulates priority for every second a job waits in the queue.
-- **Starvation Boost**: A non-linear boost that accelerates priority escalation after a configurable threshold wait time (default 30m), ensuring even low-priority background tasks eventually execute.
+### Gang scheduling and homogeneous bundling
 
-### **4. Aggressive Backfilling**
-Utilizes a **Projected Future Occupancy Map**. It identifies the earliest start time for the top-priority job and then performs a First-Fit pass to launch short-running jobs in the intervening resource gaps without delaying the primary allocation.
+For multi-node jobs, Veloce uses **homogeneous bundling**: it groups nodes with matching CPU models and architectures so parallel ranks stay aligned, and it waits until all required nodes are free before dispatch.
 
-### **5. Quality of Service (QoS) & Preemption**
-- **QoS Classes**: `Interactive` (+10,000 priority), `Production` (0), `Preemptible` (-5,000), and `Background` (-10,000).
-- **Graceful Preemption**: Automatically evicts `Preemptible` jobs to free resources for `Interactive` tasks. Initiates a 5-second `SIGTERM` window for checkpointing before a hard `SIGKILL`.
+### Fair share and starvation prevention
 
-## 🛡️ High Availability & Reliability
+Queue order uses dynamic scoring:
 
-- **Active-Passive Clustering**: Supports hot-standby nodes with real-time state mirroring over the Noise protocol.
-- **Leader Election**: Autonomous, Noise-based election ensures zero-downtime cluster management.
-- **Leader-Proxying**: Standby nodes automatically proxy internal requests (job launch, VNC/TTY streams) to the active leader, providing a unified entry point for all clients.
-- **Atomic Persistence**: Global state is persisted to `veloce_state.bin` using an **Atomic Write-Rename** cycle to ensure zero corruption on crash.
-- **Pluggable Accounting**: Supports multiple backends (Binary log, SQLite, PostgreSQL) for historical job data and telemetry.
+- **Fair share** — penalizes heavy users from decayed cumulative usage
+- **Aging** — raises priority for every second a job waits
+- **Starvation boost** — after a configurable wait (default 30 minutes), priority escalates non-linearly so low-priority work still runs
 
-## ⚙️ Configuration
+### Backfilling
 
-The controller reads `veloce.toml` (and optional `veloce-web.toml`) from the current working directory. A lab-ready sample is [`examples/veloce.toml`](../examples/veloce.toml). Lab bring-up: [docs/quickstart.md](../docs/quickstart.md).
+A projected occupancy map finds the earliest start for the top-priority job, then a first-fit pass packs shorter jobs into gaps without delaying that primary allocation.
+
+### QoS and preemption
+
+- **QoS classes:** `Interactive` (+10,000), `Production` (0), `Preemptible` (−5,000), `Background` (−10,000)
+- **Preemption:** `Preemptible` jobs yield to `Interactive`. The controller sends `SIGTERM`, waits five seconds for checkpointing, then `SIGKILL` if needed
+
+## High availability
+
+- **Active-passive** — hot-standby nodes mirror state over Noise
+- **Leader election** — Noise-based election among controllers
+- **Leader proxying** — standbys forward launch, VNC, and TTY traffic to the leader so clients keep one entry point
+- **Atomic persistence** — global state writes to `veloce_state.bin` via write-then-rename
+- **Accounting backends** — binary log, SQLite, or PostgreSQL for history and telemetry
+
+## Configuration
+
+The controller reads `veloce.toml` (and optional `veloce-web.toml`) from the current working directory. Lab sample: [`examples/veloce.toml`](../examples/veloce.toml). Bring-up: [docs/quickstart.md](../docs/quickstart.md).
 
 ```toml
 bind_address = "127.0.0.1:9000"
@@ -55,19 +60,18 @@ backend = "file" # or "sqlite", "postgres"
 database_url = ""
 ```
 
-## 🏗 Architecture & Internal Modules
+## Modules
 
-The controller's codebase is modularized to handle complex orchestration tasks asynchronously:
-- **`api.rs`**: High-performance REST API (Port 8080) built with Axum, serving the Web Dashboard.
-- **`scheduler.rs`**: The core logic engine for resource matching, backfilling, and queue prioritization.
-- **`accounting.rs`**: Pluggable historical data layer with support for multiple database backends.
-- **`containers.rs`**: Orchestration of the Apptainer container registry and solver manifest lifecycle.
-- **`main.rs`**: Noise protocol listener, state persistence management, and component coordination.
+- **`api.rs`** — Axum HTTPS API and dashboard hosting
+- **`scheduler.rs`** — matching, backfill, and queue priority
+- **`accounting.rs`** — historical job store backends
+- **`containers.rs`** — Apptainer registry and solver manifests
+- **`main.rs`** — Noise listener, persistence, and component wiring
 
-## 🏗 Dependencies
+## Dependencies
 
-- **`veloce-common`**: Core protocols and data models.
-- **`axum`**: Web framework for the REST API and dashboard hosting.
-- **`sqlx`**: Async database pool management.
-- **`dashmap`**: High-concurrency state containers.
-- **`rustls`**: Modern, secure TLS implementation.
+- **`veloce-common`** — protocols and models
+- **`axum`** — REST API and static dashboard
+- **`sqlx`** — async database pools
+- **`dashmap`** — concurrent state maps
+- **`rustls`** — TLS
