@@ -6,6 +6,8 @@ Command-line tools for the cluster: `veloce` (management) and `veloce-exec` (MPI
 
 ### Job submission
 
+Control-plane submit (`veloce submit`, arrays, CWL) uses **Noise** to the controller. HTTPS is for REST-backed ops and fileserver staging (`--input-deck`, containers).
+
 - **Resources** — cores, memory (MB), walltime, GRES/GPUs
 - **Arrays** — `--array` injects `VELOCE_ARRAY_TASK_ID` per task
 - **CWL DAGs** — YAML pipelines; the CLI rejects cycles before submit

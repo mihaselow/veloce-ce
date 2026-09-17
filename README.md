@@ -21,7 +21,7 @@ flowchart LR
 
 | Goal | How Veloce does it |
 |------|--------------------|
-| Submit over HTTPS | `veloce submit`, REST, and the WASM dashboard share the same API |
+| Submit jobs | `veloce submit` over the Noise mesh; REST and the WASM dashboard over HTTPS — same controller, different transports |
 | Isolate jobs | cgroup v2 on the worker; optional Apptainer `.sif` |
 | Run MPI without a site overlay | PMI-1/2 in-tree; `veloce-exec` as the OpenMPI remote agent |
 | Keep `#SBATCH` familiarity | [`veloce-slurm`](veloce-slurm/README.md) maps `sbatch` / `squeue` / `srun` / `scancel` / `sinfo`—it is **not** slurmd |
@@ -82,7 +82,7 @@ Crate internals: [controller](controller/README.md) · [worker](worker/README.md
 
 Slurm is a proven batch manager with partitions, slurmd, accounting daemons, and a large `#SBATCH` dialect. Veloce is smaller and shaped differently:
 
-- **API-first** — jobs, nodes, logs, and metrics go through HTTPS and the `veloce` CLI. The WASM dashboard uses the same API.
+- **API-first** — the WASM dashboard and REST clients use HTTPS; the `veloce` CLI talks Noise to the controller (and HTTPS to the fileserver for staging). Same job model either way.
 - **One mesh** — controller, workers, and CLI share a Noise PSK (`VELOCE_SECRET`). No slurmd/slurmctld split and no separate Munge realm.
 - **Isolation on the worker** — cgroup v2, optional Apptainer, and PMI for MPI.
 - **Workflows in-tree** — CWL, arrays, QoS, and GRES/GPU live in the controller.
